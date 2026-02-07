@@ -1,68 +1,118 @@
 import { z } from 'zod/v4'
-import { ALL_MODELS, DEFAULT_MODEL } from './models.js'
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'fs'
+import { join } from 'path'
+import { homedir } from 'os'
+import {
+  MODEL_ALIASES,
+  DEFAULT_MODEL_MAPPING,
+  DEFAULT_ALIAS,
+  type ModelAlias,
+} from './models.js'
 
-// Parse allowed models from environment
-const rawAllowedModels = process.env.GREY_SO_ALLOWED_MODELS
-  ? process.env.GREY_SO_ALLOWED_MODELS.split(',')
-      .map((m) => m.trim())
-      .filter((m) => m.length > 0)
-  : []
+const CONFIG_DIR = join(homedir(), '.config', 'grey-so')
+const CONFIG_PATH = join(CONFIG_DIR, 'config.json')
 
-const enabledModels =
-  rawAllowedModels.length > 0
-    ? ALL_MODELS.filter((m) => rawAllowedModels.includes(m))
-    : [...ALL_MODELS]
-
-if (enabledModels.length === 0) {
-  throw new Error(
-    'Invalid environment variables: GREY_SO_ALLOWED_MODELS - No valid models enabled.',
-  )
+// Hardcoded defaults - used when config file doesn't exist or is broken
+const HARDCODED_DEFAULTS = {
+  models: { ...DEFAULT_MODEL_MAPPING },
+  defaultAlias: DEFAULT_ALIAS,
+  systemPromptPath: join(CONFIG_DIR, 'SYSTEM_PROMPT.md'),
 }
 
-// Dynamic Zod enum based on enabled models
-export const SupportedChatModel = z.enum(enabledModels as [string, ...string[]])
-export type SupportedChatModel = z.infer<typeof SupportedChatModel>
+// Config schema - everything that can be configured
+const ConfigSchema = z.object({
+  // Model mappings: alias -> actual model name for CLI
+  models: z.record(z.string(), z.string()).default(HARDCODED_DEFAULTS.models),
 
-export const fallbackModel = enabledModels[0] ?? DEFAULT_MODEL
+  // Default alias to use when none specified
+  defaultAlias: z.enum(MODEL_ALIASES).default(HARDCODED_DEFAULTS.defaultAlias),
 
-const Config = z.object({
-  openaiApiKey: z.string().optional(),
-  geminiApiKey: z.string().optional(),
-  defaultModel: SupportedChatModel.optional(),
-  geminiMode: z.enum(['api', 'cli']).default('api'),
-  openaiMode: z.enum(['api', 'cli']).default('api'),
-  claudeMode: z.enum(['api', 'cli']).default('cli'),
+  // CLI-specific settings
   codexReasoningEffort: z
     .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
     .optional(),
+
+  // System prompt path
   systemPromptPath: z.string().optional(),
 })
 
-type ParsedConfig = z.infer<typeof Config>
+export type Config = z.infer<typeof ConfigSchema>
 
-export type Config = ParsedConfig & {
-  allowedModels: string[]
+function ensureConfigDir(): void {
+  if (!existsSync(CONFIG_DIR)) {
+    mkdirSync(CONFIG_DIR, { recursive: true })
+  }
 }
 
-const parsedConfig = Config.safeParse({
-  openaiApiKey: process.env.OPENAI_API_KEY,
-  geminiApiKey: process.env.GEMINI_API_KEY,
-  defaultModel: process.env.GREY_SO_DEFAULT_MODEL,
-  geminiMode: process.env.GEMINI_MODE,
-  openaiMode: process.env.OPENAI_MODE,
-  claudeMode: process.env.CLAUDE_MODE,
-  codexReasoningEffort: process.env.CODEX_REASONING_EFFORT,
-  systemPromptPath: process.env.GREY_SO_SYSTEM_PROMPT_PATH,
-})
-
-if (!parsedConfig.success) {
-  const errors = parsedConfig.error.issues
-    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-    .join('\n  ')
-  throw new Error(`Invalid environment variables:\n  ${errors}`)
+function writeDefaultConfig(): void {
+  ensureConfigDir()
+  const defaultConfig = {
+    models: HARDCODED_DEFAULTS.models,
+    defaultAlias: HARDCODED_DEFAULTS.defaultAlias,
+  }
+  writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2), 'utf-8')
 }
 
-export const config: Config = {
-  ...parsedConfig.data,
-  allowedModels: enabledModels,
+function loadConfig(): Config {
+  // If config doesn't exist, create default
+  if (!existsSync(CONFIG_PATH)) {
+    ensureConfigDir()
+    writeDefaultConfig()
+  }
+
+  // Read and parse config
+  let configData: unknown
+  try {
+    const fileContent = readFileSync(CONFIG_PATH, 'utf-8')
+    configData = JSON.parse(fileContent)
+  } catch {
+    // If config is broken, recreate with defaults
+    writeDefaultConfig()
+    configData = {
+      models: HARDCODED_DEFAULTS.models,
+      defaultAlias: HARDCODED_DEFAULTS.defaultAlias,
+    }
+  }
+
+  // Parse with zod, using hardcoded defaults as fallback
+  const parsed = ConfigSchema.safeParse(configData)
+  if (!parsed.success) {
+    // Config is malformed - recreate with defaults
+    writeDefaultConfig()
+    return {
+      models: HARDCODED_DEFAULTS.models,
+      defaultAlias: HARDCODED_DEFAULTS.defaultAlias,
+      systemPromptPath: HARDCODED_DEFAULTS.systemPromptPath,
+    }
+  }
+
+  // Ensure all required aliases exist in models mapping
+  const models = { ...HARDCODED_DEFAULTS.models, ...parsed.data.models }
+  for (const alias of MODEL_ALIASES) {
+    if (!models[alias]) {
+      models[alias] = HARDCODED_DEFAULTS.models[alias]
+    }
+  }
+
+  // Set default system prompt path if not specified
+  const config = parsed.data
+  config.models = models
+  if (!config.systemPromptPath) {
+    config.systemPromptPath = HARDCODED_DEFAULTS.systemPromptPath
+  }
+
+  return config
 }
+
+// Load config once at module initialization
+const loadedConfig = loadConfig()
+
+// Export the config object
+export const config: Config = loadedConfig
+
+// Export config path for reference
+export { CONFIG_DIR, CONFIG_PATH }
+
+// Re-export model types
+export { MODEL_ALIASES, DEFAULT_ALIAS }
+export type { ModelAlias }

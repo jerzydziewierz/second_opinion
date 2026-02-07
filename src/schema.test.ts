@@ -1,23 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { GetAdviceArgs, SupportedChatModel, ALL_MODELS } from './schema.js'
+import { GetAdviceArgs, MODEL_ALIASES, resolveModelAlias } from './schema.js'
+import { config } from './config.js'
 
-describe('SupportedChatModel', () => {
-  it('accepts known models and rejects unsupported ones', () => {
-    expect(SupportedChatModel.safeParse('gemini-3-pro-preview').success).toBe(
-      true,
-    )
-    expect(SupportedChatModel.safeParse('gpt-5.3-codex').success).toBe(true)
-    expect(SupportedChatModel.safeParse('claude-opus-4-6').success).toBe(true)
-    expect(SupportedChatModel.safeParse('kilocode-default').success).toBe(true)
-    expect(SupportedChatModel.safeParse('gpt-3.5').success).toBe(false)
+describe('MODEL_ALIASES', () => {
+  it('contains exactly 4 aliases', () => {
+    expect(MODEL_ALIASES).toHaveLength(4)
+    expect(MODEL_ALIASES).toContain('gemini')
+    expect(MODEL_ALIASES).toContain('claude')
+    expect(MODEL_ALIASES).toContain('codex')
+    expect(MODEL_ALIASES).toContain('kilo')
   })
+})
 
-  it('ALL_MODELS contains all available models', () => {
-    expect(ALL_MODELS).toContain('gemini-3-pro-preview')
-    expect(ALL_MODELS).toContain('gpt-5.3-codex')
-    expect(ALL_MODELS).toContain('claude-opus-4-6')
-    expect(ALL_MODELS).toContain('kilocode-default')
-    expect(ALL_MODELS).toHaveLength(4)
+describe('resolveModelAlias', () => {
+  it('resolves aliases to actual model names from config', () => {
+    expect(resolveModelAlias('gemini')).toBe(config.models.gemini)
+    expect(resolveModelAlias('claude')).toBe(config.models.claude)
+    expect(resolveModelAlias('codex')).toBe(config.models.codex)
+    expect(resolveModelAlias('kilo')).toBe(config.models.kilo)
   })
 })
 
@@ -25,6 +25,30 @@ describe('GetAdviceArgs', () => {
   it('requires prompt', () => {
     const result = GetAdviceArgs.safeParse({})
     expect(result.success).toBe(false)
+  })
+
+  it('accepts valid model aliases', () => {
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'gemini' }).success,
+    ).toBe(true)
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'claude' }).success,
+    ).toBe(true)
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'codex' }).success,
+    ).toBe(true)
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'kilo' }).success,
+    ).toBe(true)
+  })
+
+  it('rejects invalid model aliases', () => {
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'gpt-4' }).success,
+    ).toBe(false)
+    expect(
+      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'unknown' }).success,
+    ).toBe(false)
   })
 
   it('enforces non-empty git diff files', () => {
@@ -49,8 +73,8 @@ describe('GetAdviceArgs', () => {
     }
   })
 
-  it('defaults model to a valid enabled model when omitted', () => {
+  it('defaults model to config defaultAlias when omitted', () => {
     const parsed = GetAdviceArgs.parse({ prompt: 'hello world' })
-    expect(parsed.model).toBe('gemini-3-pro-preview')
+    expect(parsed.model).toBe(config.defaultAlias)
   })
 })

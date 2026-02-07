@@ -1,55 +1,20 @@
-import OpenAI from 'openai'
 import { spawn } from 'child_process'
 import { relative } from 'path'
-import { config } from './config.js'
-import { type SupportedChatModel as SupportedChatModelType } from './schema.js'
+import { config, type ModelAlias } from './config.js'
+import { resolveModelAlias } from './schema.js'
 import { logCliDebug } from './logger.js'
-import { resolveExecutionMode, resolveProvider } from './providers.js'
+import { resolveProvider } from './providers.js'
 
 export interface LlmExecutor {
   execute(
     prompt: string,
-    model: SupportedChatModelType,
+    alias: ModelAlias,
     systemPrompt: string,
     filePaths?: string[],
   ): Promise<{
     response: string
-    usage: OpenAI.CompletionUsage | null
+    usage: null // Usage is always null for CLI mode
   }>
-}
-
-/**
- * Creates an executor that interacts with an OpenAI-compatible API.
- *
- * Note: The OpenAI client is used for both OpenAI and Gemini APIs,
- * as Gemini provides an OpenAI-compatible endpoint.
- */
-function createApiExecutor(client: OpenAI): LlmExecutor {
-  return {
-    async execute(prompt, model, systemPrompt, filePaths) {
-      if (filePaths && filePaths.length > 0) {
-        // Explicitly reject unsupported parameters
-        console.warn(
-          `Warning: File paths were provided but are not supported by the API executor for model ${model}. They will be ignored.`,
-        )
-      }
-
-      const completion = await client.chat.completions.create({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt },
-        ],
-      })
-
-      const response = completion.choices[0]?.message?.content
-      if (!response) {
-        throw new Error('No response from the model via API')
-      }
-
-      return { response, usage: completion.usage ?? null }
-    },
-  }
 }
 
 /**
@@ -57,23 +22,16 @@ function createApiExecutor(client: OpenAI): LlmExecutor {
  */
 type CliConfig = {
   cliName: string
-  buildArgs: (model: SupportedChatModelType, fullPrompt: string) => string[]
+  buildArgs: (model: string, fullPrompt: string) => string[]
   handleNonZeroExit: (code: number, stderr: string) => Error
 }
 
-function buildCliEnv(model: SupportedChatModelType): NodeJS.ProcessEnv {
+function buildCliEnv(alias: ModelAlias): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env }
-  const provider = resolveProvider(model)
+  const provider = resolveProvider(alias)
 
-  // Ensure provider CLIs receive API keys if this server was configured with them.
-  if (provider === 'gemini' && config.geminiApiKey && !env.GEMINI_API_KEY) {
-    env.GEMINI_API_KEY = config.geminiApiKey
-  }
-  if (provider === 'openai' && config.openaiApiKey && !env.OPENAI_API_KEY) {
-    env.OPENAI_API_KEY = config.openaiApiKey
-  }
+  // Ensure CLIs use local subscription auth instead of API key auth
   if (provider === 'claude') {
-    // Force Claude CLI to use local subscription auth instead of API key auth.
     delete env.ANTHROPIC_API_KEY
   }
 
@@ -100,22 +58,23 @@ function createCliExecutor(cliConfig: CliConfig): LlmExecutor {
   }
 
   return {
-    async execute(prompt, model, systemPrompt, filePaths) {
+    async execute(prompt, alias, systemPrompt, filePaths) {
       const fullPrompt = buildFullPrompt(prompt, systemPrompt, filePaths)
+      // Resolve alias to actual model name
+      const model = resolveModelAlias(alias)
       const args = cliConfig.buildArgs(model, fullPrompt)
       const { cliName } = cliConfig
-      const env = buildCliEnv(model)
+      const env = buildCliEnv(alias)
 
       return new Promise((resolve, reject) => {
         try {
           logCliDebug(`Spawning ${cliName} CLI`, {
+            alias,
             model,
             promptLength: fullPrompt.length,
             filePathsCount: filePaths?.length || 0,
             args: args,
             promptPreview: fullPrompt.slice(0, 300),
-            hasGeminiApiKey: Boolean(env.GEMINI_API_KEY),
-            hasOpenaiApiKey: Boolean(env.OPENAI_API_KEY),
           })
 
           const child = spawn(cliName, args, {
@@ -214,79 +173,40 @@ const claudeCliConfig: CliConfig = {
 }
 
 const kilocodeCliConfig: CliConfig = {
-  cliName: 'kilocode',
-  buildArgs: (_model, fullPrompt) => ['run', '--print', fullPrompt],
+  cliName: 'kilo',
+  buildArgs: (model, fullPrompt) => ['run', '-m', model, fullPrompt],
   handleNonZeroExit: (code, stderr) =>
-    new Error(`Kilocode CLI exited with code ${code}. Error: ${stderr.trim()}`),
+    new Error(`Kilo CLI exited with code ${code}. Error: ${stderr.trim()}`),
 }
 
 const createExecutorProvider = () => {
-  const executorCache = new Map<string, LlmExecutor>()
-  const clientCache = new Map<string, OpenAI>()
+  const executorCache = new Map<ModelAlias, LlmExecutor>()
 
-  const getOpenAIClient = (): OpenAI => {
-    if (clientCache.has('openai')) return clientCache.get('openai')!
-    if (!config.openaiApiKey) {
-      throw new Error(
-        'OPENAI_API_KEY environment variable is required for OpenAI models in API mode',
-      )
-    }
-    const client = new OpenAI({ apiKey: config.openaiApiKey })
-    clientCache.set('openai', client)
-    return client
-  }
-
-  const getGeminiApiClient = (): OpenAI => {
-    if (clientCache.has('geminiApi')) return clientCache.get('geminiApi')!
-    if (!config.geminiApiKey) {
-      throw new Error(
-        'GEMINI_API_KEY environment variable is required for Gemini models in API mode',
-      )
-    }
-    const client = new OpenAI({
-      apiKey: config.geminiApiKey,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    })
-    clientCache.set('geminiApi', client)
-    return client
-  }
-
-  return (model: SupportedChatModelType): LlmExecutor => {
-    const provider = resolveProvider(model)
-    const executionMode = resolveExecutionMode(model)
-    const cacheKey = `${provider}-${model}-${executionMode}`
-
-    if (executorCache.has(cacheKey)) {
-      return executorCache.get(cacheKey)!
+  return (alias: ModelAlias): LlmExecutor => {
+    if (executorCache.has(alias)) {
+      return executorCache.get(alias)!
     }
 
     let executor: LlmExecutor
 
-    if (provider === 'openai') {
-      executor =
-        executionMode === 'cli'
-          ? createCliExecutor(codexCliConfig)
-          : createApiExecutor(getOpenAIClient())
-    } else if (provider === 'gemini') {
-      executor =
-        executionMode === 'cli'
-          ? createCliExecutor(geminiCliConfig)
-          : createApiExecutor(getGeminiApiClient())
-    } else if (provider === 'claude') {
-      if (executionMode === 'cli') {
+    switch (alias) {
+      case 'gemini':
+        executor = createCliExecutor(geminiCliConfig)
+        break
+      case 'codex':
+        executor = createCliExecutor(codexCliConfig)
+        break
+      case 'claude':
         executor = createCliExecutor(claudeCliConfig)
-      } else {
-        throw new Error(
-          'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
-        )
-      }
-    } else if (provider === 'kilocode') {
-      executor = createCliExecutor(kilocodeCliConfig)
-    } else {
-      throw new Error(`Unable to determine LLM provider for model: ${model}`)
+        break
+      case 'kilo':
+        executor = createCliExecutor(kilocodeCliConfig)
+        break
+      default:
+        throw new Error(`Unknown model alias: ${alias}`)
     }
 
-    executorCache.set(cacheKey, executor)
+    executorCache.set(alias, executor)
     return executor
   }
 }

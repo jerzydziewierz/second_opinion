@@ -1,45 +1,39 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EventEmitter } from 'events'
 import type { Config } from './config.js'
-import type { SupportedChatModel } from './schema.js'
+import type { ModelAlias } from './config.js'
 import { getExecutorForModel } from './llm.js'
 
-const createCompletionMock = vi.hoisted(() => vi.fn())
 const spawnMock = vi.hoisted(() => vi.fn())
 const logCliDebugMock = vi.hoisted(() => vi.fn())
 
 const mockConfig = vi.hoisted(
   () =>
     ({
-      openaiApiKey: 'openai',
-      geminiApiKey: 'gemini',
-      openaiMode: 'api',
-      geminiMode: 'api',
-      claudeMode: 'cli',
-      defaultModel: undefined,
+      models: {
+        gemini: 'gemini-3-pro-preview',
+        claude: 'claude-opus-4-6',
+        codex: 'gpt-5.3-codex',
+        kilo: 'openrouter/moonshotai/kimi-k2.5',
+      },
+      defaultAlias: 'gemini' as ModelAlias,
       codexReasoningEffort: undefined,
+      systemPromptPath: undefined,
     }) as Config,
 )
 
-vi.mock('./config.js', () => ({ config: mockConfig }))
+vi.mock('./config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./config.js')>()
+  return {
+    ...actual,
+    config: mockConfig,
+    // Re-export these so they remain available
+    MODEL_ALIASES: actual.MODEL_ALIASES,
+    DEFAULT_ALIAS: actual.DEFAULT_ALIAS,
+  }
+})
 vi.mock('./logger.js', () => ({ logCliDebug: logCliDebugMock }))
 vi.mock('child_process', () => ({ spawn: spawnMock }))
-vi.mock('openai', () => {
-  class MockOpenAI {
-    chat = {
-      completions: {
-        create: createCompletionMock,
-      },
-    }
-
-    constructor(options: { apiKey: string; baseURL?: string }) {
-      // store options if needed for assertions in the future
-      void options
-    }
-  }
-
-  return { default: MockOpenAI }
-})
 
 type FakeChildProcess = EventEmitter & {
   stdout: EventEmitter
@@ -68,78 +62,27 @@ const resolveCliExecution = (
   child.emit('close', code)
 }
 
+const setupSpawn = (child: FakeChildProcess) => {
+  spawnMock.mockReturnValue(child)
+}
+
 beforeEach(() => {
-  createCompletionMock.mockReset()
   spawnMock.mockReset()
   logCliDebugMock.mockReset()
-  Object.assign(mockConfig, {
-    openaiApiKey: 'openai',
-    geminiApiKey: 'gemini',
-    openaiMode: 'api',
-    geminiMode: 'api',
-    claudeMode: 'cli',
-    defaultModel: undefined,
-  })
+  mockConfig.codexReasoningEffort = undefined
 })
 
 afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('API executor', () => {
-  it('sends system and user prompts and ignores file paths', async () => {
-    const usage = { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 }
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: 'answer' } }],
-      usage,
-    })
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    const result = await executor.execute(
-      'user prompt',
-      'gpt-5.3-codex',
-      'system prompt',
-      ['/tmp/file.ts'],
-    )
-
-    expect(createCompletionMock).toHaveBeenCalledWith({
-      model: 'gpt-5.3-codex',
-      messages: [
-        { role: 'system', content: 'system prompt' },
-        { role: 'user', content: 'user prompt' },
-      ],
-    })
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('File paths were provided'),
-    )
-    expect(result).toEqual({ response: 'answer', usage })
-  })
-
-  it('throws when the API returns no content', async () => {
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: {} }],
-    })
-
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    await expect(
-      executor.execute('prompt', 'gpt-5.3-codex', 'system'),
-    ).rejects.toThrow('No response from the model via API')
-  })
-})
-
 describe('CLI executor', () => {
-  const setupSpawn = (child: FakeChildProcess) => {
-    spawnMock.mockReturnValue(child)
-  }
-
   it('spawns codex CLI with combined prompt and files', async () => {
-    mockConfig.openaiMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    const promise = executor.execute('user', 'gpt-5.3-codex', 'system', [
+    const executor = getExecutorForModel('codex')
+    const promise = executor.execute('user', 'codex', 'system', [
       '/absolute/path/to/file.ts',
     ])
 
@@ -151,7 +94,7 @@ describe('CLI executor', () => {
     expect(cliArgs[0]).toBe('exec')
     expect(cliArgs[1]).toBe('--skip-git-repo-check')
     expect(cliArgs[2]).toBe('-m')
-    expect(cliArgs[3]).toBe('gpt-5.3-codex')
+    expect(cliArgs[3]).toBe('gpt-5.3-codex') // Resolved model name
     expect(cliArgs[4]).toContain('system')
     expect(cliArgs[4]).toContain('user')
     expect(cliArgs[4]).toContain('Files: @')
@@ -162,12 +105,11 @@ describe('CLI executor', () => {
   })
 
   it('rejects with codex errors on non-zero exit', async () => {
-    mockConfig.openaiMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
+    const executor = getExecutorForModel('codex')
+    const promise = executor.execute('user', 'codex', 'system')
 
     resolveCliExecution(child, { stderr: 'boom', code: 2 })
 
@@ -177,13 +119,12 @@ describe('CLI executor', () => {
   })
 
   it('includes reasoning effort config when set', async () => {
-    mockConfig.openaiMode = 'cli'
     mockConfig.codexReasoningEffort = 'xhigh'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
+    const executor = getExecutorForModel('codex')
+    const promise = executor.execute('user', 'codex', 'system')
 
     resolveCliExecution(child, { stdout: 'result', code: 0 })
 
@@ -197,12 +138,11 @@ describe('CLI executor', () => {
   })
 
   it('wraps gemini quota errors specially', async () => {
-    mockConfig.geminiMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gemini-3-pro-preview')
-    const promise = executor.execute('user', 'gemini-3-pro-preview', 'system')
+    const executor = getExecutorForModel('gemini')
+    const promise = executor.execute('user', 'gemini', 'system')
 
     resolveCliExecution(child, {
       stderr: 'RESOURCE_EXHAUSTED: quota exceeded',
@@ -213,12 +153,11 @@ describe('CLI executor', () => {
   })
 
   it('spawns claude CLI with print mode and model', async () => {
-    mockConfig.claudeMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('claude-opus-4-6')
-    const promise = executor.execute('user', 'claude-opus-4-6', 'system')
+    const executor = getExecutorForModel('claude')
+    const promise = executor.execute('user', 'claude', 'system')
 
     resolveCliExecution(child, { stdout: 'result', code: 0 })
 
@@ -227,7 +166,7 @@ describe('CLI executor', () => {
     const cliArgs = args?.[1] as string[]
     expect(cliArgs[0]).toBe('--print')
     expect(cliArgs[1]).toBe('--model')
-    expect(cliArgs[2]).toBe('claude-opus-4-6')
+    expect(cliArgs[2]).toBe('claude-opus-4-6') // Resolved model name
     expect(cliArgs[3]).toContain('system')
     expect(cliArgs[3]).toContain('user')
 
@@ -236,22 +175,22 @@ describe('CLI executor', () => {
     expect(result.usage).toBeNull()
   })
 
-  it('spawns kilocode CLI in print mode', async () => {
+  it('spawns kilo CLI with model from config', async () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('kilocode-default')
-    const promise = executor.execute('user', 'kilocode-default', 'system')
+    const executor = getExecutorForModel('kilo')
+    const promise = executor.execute('user', 'kilo', 'system')
 
     resolveCliExecution(child, { stdout: 'result', code: 0 })
 
     const args = spawnMock.mock.calls[0]
-    expect(args?.[0]).toBe('kilocode')
-    expect(args?.[1]).toEqual([
-      'run',
-      '--print',
-      expect.stringContaining('system'),
-    ])
+    expect(args?.[0]).toBe('kilo')
+    const cliArgs = args?.[1] as string[]
+    expect(cliArgs[0]).toBe('-m')
+    expect(cliArgs[1]).toBe('openrouter/moonshotai/kimi-k2.5') // Model from mock config
+    expect(cliArgs[2]).toBe('--print')
+    expect(cliArgs[3]).toContain('system')
 
     const result = await promise
     expect(result.response).toBe('result')
@@ -259,7 +198,6 @@ describe('CLI executor', () => {
   })
 
   it('strips ANTHROPIC_API_KEY when spawning claude CLI', async () => {
-    mockConfig.claudeMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
@@ -267,8 +205,8 @@ describe('CLI executor', () => {
     process.env.ANTHROPIC_API_KEY = 'test-key'
 
     try {
-      const executor = getExecutorForModel('claude-opus-4-6')
-      const promise = executor.execute('user', 'claude-opus-4-6', 'system')
+      const executor = getExecutorForModel('claude')
+      const promise = executor.execute('user', 'claude', 'system')
       resolveCliExecution(child, { stdout: 'ok', code: 0 })
       await promise
 
@@ -286,12 +224,11 @@ describe('CLI executor', () => {
   })
 
   it('handles spawn error events with friendly message', async () => {
-    mockConfig.openaiMode = 'cli'
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
+    const executor = getExecutorForModel('codex')
+    const promise = executor.execute('user', 'codex', 'system')
 
     child.emit('error', new Error('not found'))
 
@@ -301,31 +238,29 @@ describe('CLI executor', () => {
   })
 
   it('handles synchronous spawn failures', async () => {
-    mockConfig.openaiMode = 'cli'
     spawnMock.mockImplementation(() => {
       throw new Error('sync failure')
     })
 
-    const executor = getExecutorForModel('gpt-5.3-codex')
-    await expect(
-      executor.execute('user', 'gpt-5.3-codex', 'system'),
-    ).rejects.toThrow(
+    const executor = getExecutorForModel('codex')
+    await expect(executor.execute('user', 'codex', 'system')).rejects.toThrow(
       'Synchronous error while trying to spawn codex: sync failure',
     )
   })
 })
 
 describe('executor selection', () => {
-  it('throws for claude API mode until implemented', () => {
-    mockConfig.claudeMode = 'api'
-    expect(() => getExecutorForModel('claude-opus-4-6')).toThrow(
-      'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
-    )
+  it('returns CLI executor for all 4 aliases', () => {
+    // All 4 aliases should work
+    expect(() => getExecutorForModel('gemini')).not.toThrow()
+    expect(() => getExecutorForModel('claude')).not.toThrow()
+    expect(() => getExecutorForModel('codex')).not.toThrow()
+    expect(() => getExecutorForModel('kilo')).not.toThrow()
   })
 
-  it('throws on unknown models', () => {
-    expect(() =>
-      getExecutorForModel('mystery-model' as unknown as SupportedChatModel),
-    ).toThrow('Unable to determine LLM provider')
+  it('throws on unknown aliases', () => {
+    expect(() => getExecutorForModel('unknown' as ModelAlias)).toThrow(
+      'Unknown model alias',
+    )
   })
 })

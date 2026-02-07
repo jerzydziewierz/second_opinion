@@ -5,15 +5,15 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { config } from './config.js'
-import { toolSchema, type SupportedChatModel } from './schema.js'
+import { toolSchema, type ModelAlias } from './schema.js'
 import { logServerStart, logConfiguration } from './logger.js'
 import { DEFAULT_SYSTEM_PROMPT } from './system-prompt.js'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { homedir } from 'os'
 import { isCliMode } from './providers.js'
 import { handleGetAdvice } from './controllers/get-advice.js'
+import { CONFIG_DIR } from './config.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const packageJson = JSON.parse(
@@ -39,8 +39,8 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
   }
 })
 
-export function isCliExecution(model: SupportedChatModel): boolean {
-  return isCliMode(model)
+export function isCliExecution(_alias: ModelAlias): boolean {
+  return isCliMode()
 }
 export { handleGetAdvice } from './controllers/get-advice.js'
 
@@ -58,9 +58,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   throw new Error(`Unknown tool: ${request.params.name}`)
 })
 
-export function initSystemPrompt(homeDirectory: string = homedir()) {
-  const configDir = join(homeDirectory, '.grey-so')
-  const promptPath = join(configDir, 'SYSTEM_PROMPT.md')
+export function initSystemPrompt() {
+  const promptPath = join(CONFIG_DIR, 'SYSTEM_PROMPT.md')
 
   if (existsSync(promptPath)) {
     console.error(`System prompt already exists at: ${promptPath}`)
@@ -68,8 +67,8 @@ export function initSystemPrompt(homeDirectory: string = homedir()) {
     process.exit(1)
   }
 
-  if (!existsSync(configDir)) {
-    mkdirSync(configDir, { recursive: true })
+  if (!existsSync(CONFIG_DIR)) {
+    mkdirSync(CONFIG_DIR, { recursive: true })
   }
 
   writeFileSync(promptPath, DEFAULT_SYSTEM_PROMPT, 'utf-8')

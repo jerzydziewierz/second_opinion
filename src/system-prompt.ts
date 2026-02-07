@@ -1,6 +1,4 @@
 import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
-import { homedir } from 'os'
 import { config } from './config.js'
 
 export const DEFAULT_SYSTEM_PROMPT = `You are an expert engineering consultant. You will provide a second opinion and advice in solving a difficult problem.
@@ -33,11 +31,10 @@ const CLI_MODE_SUFFIX = `
 IMPORTANT: Do not edit files yourself, only provide recommendations and code examples`
 
 export function getSystemPrompt(isCliMode: boolean): string {
-  const customPromptPath =
-    config.systemPromptPath ?? join(homedir(), '.grey-so', 'SYSTEM_PROMPT.md')
+  const customPromptPath = config.systemPromptPath
   let systemPrompt: string
 
-  if (existsSync(customPromptPath)) {
+  if (customPromptPath && existsSync(customPromptPath)) {
     try {
       systemPrompt = readFileSync(customPromptPath, 'utf-8').trim()
     } catch (error) {

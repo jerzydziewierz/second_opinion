@@ -1,10 +1,26 @@
 import { z } from 'zod/v4'
-import { ALL_MODELS } from './models.js'
-import { SupportedChatModel, fallbackModel } from './config.js'
+import {
+  MODEL_ALIASES,
+  DEFAULT_ALIAS,
+  config,
+  type ModelAlias,
+} from './config.js'
 
 // Re-export for consumers
-export { ALL_MODELS, SupportedChatModel }
-export type { SupportedChatModel as SupportedChatModelType }
+export { MODEL_ALIASES }
+export type { ModelAlias }
+
+// Zod enum for the 4 model aliases
+const ModelAliasEnum = z.enum(MODEL_ALIASES)
+
+// Helper to resolve alias to actual model name
+export function resolveModelAlias(alias: ModelAlias): string {
+  const resolved = config.models[alias]
+  if (typeof resolved === 'string') {
+    return resolved
+  }
+  return config.models[DEFAULT_ALIAS] as string
+}
 
 export const GetAdviceArgs = z.object({
   files: z
@@ -18,10 +34,10 @@ export const GetAdviceArgs = z.object({
     .describe(
       'Your question or request for the consultant LLM. Ask neutral, open-ended questions without suggesting specific solutions to avoid biasing the analysis.',
     ),
-  model: SupportedChatModel.optional()
-    .default(fallbackModel)
+  model: ModelAliasEnum.optional()
+    .default(config.defaultAlias)
     .describe(
-      'LLM model to use. Use one of "gpt-5.3-codex", "gemini-3-pro-preview", "claude-opus-4-6", or "kilocode-default" as per user preference.',
+      'LLM model to use. Use one of "gemini", "claude", "codex", or "kilo" as per user preference.',
     ),
   git_diff: z
     .object({

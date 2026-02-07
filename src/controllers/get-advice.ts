@@ -1,16 +1,10 @@
 import { resolve } from 'path'
-import { config } from '../config.js'
-import { processFiles, validateContextFiles } from '../file.js'
+import { config, type ModelAlias } from '../config.js'
+import { validateContextFiles } from '../file.js'
 import { generateGitDiff } from '../git.js'
 import { queryLlm } from '../llm-query.js'
-import {
-  logPrompt,
-  logResponse,
-  logToolCall,
-} from '../logger.js'
-import { buildPrompt } from '../prompt-builder.js'
-import { isCliMode } from '../providers.js'
-import { GetAdviceArgs, type SupportedChatModel } from '../schema.js'
+import { logPrompt, logResponse, logToolCall } from '../logger.js'
+import { GetAdviceArgs } from '../schema.js'
 
 export async function handleGetAdvice(args: unknown) {
   const parseResult = GetAdviceArgs.safeParse(args)
@@ -21,28 +15,9 @@ export async function handleGetAdvice(args: unknown) {
     throw new Error(`Invalid request parameters: ${errors}`)
   }
 
-  const {
-    files,
-    prompt: userPrompt,
-    git_diff,
-    model: parsedModel,
-  } = parseResult.data
-
-  const providedModel =
-    typeof args === 'object' &&
-    args !== null &&
-    Object.prototype.hasOwnProperty.call(
-      args as Record<string, unknown>,
-      'model',
-    )
-
-  const model: SupportedChatModel = providedModel
-    ? parsedModel
-    : (config.defaultModel ?? parsedModel)
+  const { files, prompt: userPrompt, git_diff, model: alias } = parseResult.data
 
   logToolCall('get_advice', args)
-
-  const isCliExecutionMode = isCliMode(model)
 
   let gitDiffOutput: string | undefined
   if (git_diff) {
@@ -64,20 +39,16 @@ export async function handleGetAdvice(args: unknown) {
     validateContextFiles(files)
   }
 
-  if (!isCliExecutionMode) {
-    const contextFiles = files ? processFiles(files) : []
-    prompt = buildPrompt(userPrompt, contextFiles, gitDiffOutput)
-  } else {
-    filePaths = files ? files.map((f) => resolve(f)) : undefined
-    prompt = gitDiffOutput
-      ? `## Git Diff\n\`\`\`diff\n${gitDiffOutput}\n\`\`\`\n\n${userPrompt}`
-      : userPrompt
-  }
+  // Always use CLI mode - pass file paths to CLI
+  filePaths = files ? files.map((f) => resolve(f)) : undefined
+  prompt = gitDiffOutput
+    ? `## Git Diff\n\`\`\`diff\n${gitDiffOutput}\n\`\`\`\n\n${userPrompt}`
+    : userPrompt
 
-  await logPrompt(model, prompt)
+  await logPrompt(alias, prompt)
 
-  const { response, costInfo } = await queryLlm(prompt, model, filePaths)
-  await logResponse(model, response, costInfo)
+  const { response, costInfo } = await queryLlm(prompt, alias, filePaths)
+  await logResponse(alias, response, costInfo)
 
   return {
     content: [{ type: 'text', text: response }],
