@@ -2,23 +2,13 @@
 
 ## Critical
 
-- [x] Shell injection in `src/git.ts` — `execSync` with string interpolation of
-      user input (`baseRef`, `files`). Switch to `execFileSync` with arg array
-      and `shell: false`.
-- [x] Git option injection — even after fixing shell injection, user-controlled
-      args starting with `-` can be interpreted as git flags (e.g.
-      `-c core.sshCommand=...`, `--upload-pack`). Validate refs with strict
-      regex, reject args starting with `-`, and use `--` separator before file
-      paths.
+- [x] all known critical problems fixed. Be on lookout for any new problems.
 
 ## Medium
 
 - [ ] Architectural coupling — model detection logic (string prefix checks like
       `gemini-`, `gpt-`) scattered across `src/llm.ts`, `src/llm-query.ts`,
       `src/server.ts`. Refactor into a provider interface/registry.
-- [ ] Error swallowing — git diff errors in `src/git.ts` returned as strings
-      instead of propagated. LLM could misinterpret error messages as diff
-      content. Use explicit failure or Result type.
 - [ ] Data exposure boundary — no redaction/exclusion controls for files sent as
       context. Consider filtering sensitive files (.env, credentials, etc.).
 - [ ] Dual execution modes (API vs CLI) can produce different behavior, auth

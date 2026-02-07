@@ -49,7 +49,9 @@ vi.mock('./logger.js', () => ({
 
 beforeEach(() => {
   processFilesMock.mockReset().mockReturnValue([{ path: 'a.ts', content: '' }])
-  generateGitDiffMock.mockReset().mockReturnValue('diff output')
+  generateGitDiffMock
+    .mockReset()
+    .mockReturnValue({ ok: true, diff: 'diff output' })
   buildPromptMock.mockReset().mockReturnValue('BUILT PROMPT')
   queryLlmMock.mockReset().mockResolvedValue({
     response: 'ok',

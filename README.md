@@ -9,11 +9,16 @@ When your agent is stuck or you want a sanity check, just say "ask gemini" or
 
 # Prerequisities
 
-It is assumed that you will be using claude-code as the primary driver, although reverse usage is likely possible too;
+It is assumed that you will be using claude-code as the primary driver, although
+reverse usage is likely possible too;
 
-It is most recommended that you use the "cli method" as it gives the subagents capabilities to explore the repo as needed. 
+It is most recommended that you use the "cli method" as it gives the subagents
+capabilities to explore the repo as needed.
 
-install Google/gemini from <CLAUDE: find correct link> and OpenAI/codex from <CLAUDE: find correct link>; configure both them and make sure they can use your preferred billing method (subscription or API); note that as of 2026-02, subscription is approx. 20x cheaper than API;
+install Google/gemini from <CLAUDE: find correct link> and OpenAI/codex from
+<CLAUDE: find correct link>; configure both them and make sure they can use your
+preferred billing method (subscription or API); note that as of 2026-02,
+subscription is approx. 20x cheaper than API;
 
 once configured, test by :
 
@@ -47,12 +52,17 @@ once configured, test by :
 
 ## Quick start
 
+Install and authenticate both CLIs first, then register the MCP server in CLI
+mode:
+
 ```bash
-claude mcp add grey-so -e GEMINI_API_KEY=your_key -- npx -y grey-so
+claude mcp add --scope user grey-so -e GEMINI_MODE=cli -e OPENAI_MODE=cli -- npx -y grey-so
 ```
 
-For global availability across projects, add `--scope user`. For OpenAI models,
-add `-e OPENAI_API_KEY=your_key`.
+If you prefer API mode for either provider, replace the corresponding
+`_MODE=cli` flag with an API key (e.g. `-e GEMINI_API_KEY=your_key`). Note that
+this will mean that agentic features (e.g. active exploration) will be severely
+limited.
 
 ## Further reading
 

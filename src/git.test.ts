@@ -12,13 +12,15 @@ beforeEach(() => {
 })
 
 describe('generateGitDiff', () => {
-  it('returns an error string when no files are provided', () => {
+  it('returns failure when no files are provided', () => {
     const result = generateGitDiff(undefined, [])
-    expect(result).toContain('Error generating git diff')
-    expect(result).toContain('No files specified for git diff')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('No files specified for git diff')
+    }
   })
 
-  it('executes git diff with args array and shell disabled', () => {
+  it('returns success with diff output', () => {
     execFileSyncMock.mockReturnValueOnce('diff output')
 
     const result = generateGitDiff('/repo', ['a.ts', 'b.ts'], 'main')
@@ -34,14 +36,14 @@ describe('generateGitDiff', () => {
         shell: false,
       },
     )
-    expect(result).toBe('diff output')
+    expect(result).toEqual({ ok: true, diff: 'diff output' })
   })
 
   it('uses process.cwd() by default when repo path is missing', () => {
     const cwd = process.cwd()
     execFileSyncMock.mockReturnValueOnce('diff output')
 
-    generateGitDiff(undefined, ['c.ts'])
+    const result = generateGitDiff(undefined, ['c.ts'])
 
     expect(execFileSyncMock).toHaveBeenCalledWith(
       'git',
@@ -54,42 +56,54 @@ describe('generateGitDiff', () => {
         shell: false,
       },
     )
+    expect(result).toEqual({ ok: true, diff: 'diff output' })
   })
 
-  it('wraps git errors with a helpful prefix', () => {
+  it('returns failure with error message on git errors', () => {
     execFileSyncMock.mockImplementationOnce(() => {
       throw new Error('boom')
     })
 
     const result = generateGitDiff('/repo', ['a.ts'])
-    expect(result).toContain('Error generating git diff: boom')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('boom')
+    }
   })
 
   it('rejects baseRef starting with a dash (option injection)', () => {
     const result = generateGitDiff('/repo', ['a.ts'], '-c core.sshCommand=evil')
-    expect(result).toContain('Error generating git diff')
-    expect(result).toContain('Invalid git ref')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Invalid git ref')
+    }
     expect(execFileSyncMock).not.toHaveBeenCalled()
   })
 
   it('rejects file paths starting with a dash (option injection)', () => {
     const result = generateGitDiff('/repo', ['--output=/tmp/pwn', 'a.ts'])
-    expect(result).toContain('Error generating git diff')
-    expect(result).toContain('Invalid file path')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Invalid file path')
+    }
     expect(execFileSyncMock).not.toHaveBeenCalled()
   })
 
   it('rejects shell metacharacters in file paths', () => {
     const result = generateGitDiff('/repo', ['foo; rm -rf /'])
-    expect(result).toContain('Error generating git diff')
-    expect(result).toContain('Invalid file path')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Invalid file path')
+    }
     expect(execFileSyncMock).not.toHaveBeenCalled()
   })
 
   it('rejects shell metacharacters in baseRef', () => {
     const result = generateGitDiff('/repo', ['a.ts'], '$(whoami)')
-    expect(result).toContain('Error generating git diff')
-    expect(result).toContain('Invalid git ref')
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.error).toContain('Invalid git ref')
+    }
     expect(execFileSyncMock).not.toHaveBeenCalled()
   })
 })

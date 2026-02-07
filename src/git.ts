@@ -15,28 +15,36 @@ function validateFilePath(file: string): void {
   }
 }
 
+export type GitDiffResult =
+  | { ok: true; diff: string }
+  | { ok: false; error: string }
+
 export function generateGitDiff(
   repoPath: string | undefined,
   files: string[],
   baseRef: string = 'HEAD',
-): string {
+): GitDiffResult {
   try {
     const repo = repoPath || process.cwd()
     if (files.length === 0) {
-      throw new Error('No files specified for git diff')
+      return { ok: false, error: 'No files specified for git diff' }
     }
 
     validateRef(baseRef)
     files.forEach(validateFilePath)
 
-    return execFileSync('git', ['diff', baseRef, '--', ...files], {
+    const diff = execFileSync('git', ['diff', baseRef, '--', ...files], {
       cwd: repo,
       encoding: 'utf-8',
       maxBuffer: 1024 * 1024,
       timeout: 10_000,
       shell: false,
     })
+    return { ok: true, diff }
   } catch (error) {
-    return `Error generating git diff: ${error instanceof Error ? error.message : String(error)}`
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    }
   }
 }

@@ -89,24 +89,27 @@ export async function handleGetAdvice(args: unknown) {
 
   const isCliMode = isCliExecution(model)
 
+  let gitDiffOutput: string | undefined
+  if (git_diff) {
+    const result = generateGitDiff(
+      git_diff.repo_path,
+      git_diff.files,
+      git_diff.base_ref,
+    )
+    if (!result.ok) {
+      throw new Error(`Git diff failed: ${result.error}`)
+    }
+    gitDiffOutput = result.diff
+  }
+
   let prompt: string
   let filePaths: string[] | undefined
 
   if (!isCliMode) {
     const contextFiles = files ? processFiles(files) : []
-
-    const gitDiffOutput = git_diff
-      ? generateGitDiff(git_diff.repo_path, git_diff.files, git_diff.base_ref)
-      : undefined
-
     prompt = buildPrompt(userPrompt, contextFiles, gitDiffOutput)
   } else {
     filePaths = files ? files.map((f) => resolve(f)) : undefined
-
-    const gitDiffOutput = git_diff
-      ? generateGitDiff(git_diff.repo_path, git_diff.files, git_diff.base_ref)
-      : undefined
-
     prompt = gitDiffOutput
       ? `## Git Diff\n\`\`\`diff\n${gitDiffOutput}\n\`\`\`\n\n${userPrompt}`
       : userPrompt
