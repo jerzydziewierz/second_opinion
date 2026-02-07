@@ -247,11 +247,7 @@ describe('CLI executor', () => {
 
     const args = spawnMock.mock.calls[0]
     expect(args?.[0]).toBe('opencode')
-    expect(args?.[1]).toEqual([
-      'run',
-      '--print',
-      expect.stringContaining('system'),
-    ])
+    expect(args?.[1]).toEqual(['run', expect.stringContaining('system')])
 
     const result = await promise
     expect(result.response).toBe('result')

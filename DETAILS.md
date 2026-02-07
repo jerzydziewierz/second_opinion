@@ -12,13 +12,27 @@
 | `OPENAI_MODE`                | No       | `api` (default) or `cli`                                                               |
 | `CLAUDE_MODE`                | No       | `cli` (default). `api` currently not implemented                                       |
 | `CODEX_REASONING_EFFORT`     | No       | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`                                    |
-| `GREY_SO_DEFAULT_MODEL`      | No       | Override default model (`gemini-3-pro-preview`, `gpt-5.3-codex`, or `claude-opus-4-6`) |
+| `GREY_SO_DEFAULT_MODEL`      | No       | Override default model (`gemini-3-pro-preview`, `gpt-5.3-codex`, `claude-opus-4-6`, or `opencode-default`) |
 | `GREY_SO_ALLOWED_MODELS`     | No       | Comma-separated subset to advertise in the tool schema                                 |
 | `GREY_SO_SYSTEM_PROMPT_PATH` | No       | Custom path to system prompt file                                                      |
 
 If the `model` argument is omitted in `get_advice`, it defaults to
 `gemini-3-pro-preview` unless overridden by `GREY_SO_DEFAULT_MODEL` or narrowed
 by `GREY_SO_ALLOWED_MODELS`.
+
+### Mode compatibility note
+
+This project supports a mix of API-backed and CLI-backed providers, and some
+provider/mode combinations are currently more mature than others.
+
+- Gemini and Codex can run in `api` or `cli` mode.
+- Claude is currently CLI-only in practice (`CLAUDE_MODE=api` is not
+  implemented).
+- Opencode is currently CLI-only (`opencode-default` model).
+
+If you switch between subscription/CLI and API-based usage, make sure the
+matching env vars are set (`*_MODE`, API keys, and CLI auth state). Some mixed
+combinations may still be unsupported or less stable as of now.
 
 ### CLI mode
 
@@ -49,6 +63,10 @@ claude mcp add grey-so -e CLAUDE_MODE=cli -- npx -y grey-so
 ```
 
 Requires Claude Code installed and authenticated.
+
+**Opencode CLI:**
+
+Use model `opencode-default` to route through your local Opencode CLI.
 
 ## Customization
 

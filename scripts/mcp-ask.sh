@@ -24,8 +24,14 @@ esac
 
 # Avoid permissions errors when grey-so writes logs.
 export XDG_STATE_HOME="/tmp/grey-so-state"
+# Force CLI execution paths for all supported providers.
+export GEMINI_MODE="cli"
+export OPENAI_MODE="cli"
+export CLAUDE_MODE="cli"
 # Explicitly inherit Gemini key from parent shell when present.
 export GEMINI_API_KEY="${GEMINI_API_KEY-}"
+# Force Claude CLI to avoid API-key auth path.
+export ANTHROPIC_API_KEY=""
 
 python3 - "$model" "$prompt" <<'PY'
 import anyio
@@ -43,6 +49,7 @@ async def main() -> None:
     child_env = dict(os.environ)
     if "GEMINI_API_KEY" in os.environ:
         child_env["GEMINI_API_KEY"] = os.environ["GEMINI_API_KEY"]
+    child_env["ANTHROPIC_API_KEY"] = ""
 
     params = StdioServerParameters(
         command="grey-so",

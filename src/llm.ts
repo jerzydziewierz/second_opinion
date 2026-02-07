@@ -215,7 +215,7 @@ const claudeCliConfig: CliConfig = {
 
 const opencodeCliConfig: CliConfig = {
   cliName: 'opencode',
-  buildArgs: (_model, fullPrompt) => ['run', '--print', fullPrompt],
+  buildArgs: (_model, fullPrompt) => ['run', fullPrompt],
   handleNonZeroExit: (code, stderr) =>
     new Error(`Opencode CLI exited with code ${code}. Error: ${stderr.trim()}`),
 }

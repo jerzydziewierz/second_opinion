@@ -2,11 +2,12 @@
 
 An MCP server that lets your AI coding assistant consult a different LLM when it
 needs a fresh perspective. Currently supports Gemini 3 Pro, GPT-5.3 Codex, and
-Claude Opus 4.6 (CLI mode) — three models, one tool, minimal context overhead.
+Claude Opus 4.6 (CLI mode), plus Opencode (CLI mode) — one tool, minimal
+context overhead.
 
 When your agent is stuck or you want a sanity check, just say "ask gemini", "ask
-codex", or "ask claude" and it queries the other model with the relevant files
-as context.
+codex", "ask claude", or "ask opencode" and it queries the other model with the
+relevant files as context.
 
 # Prerequisities
 
@@ -18,6 +19,7 @@ capabilities to explore the repo as needed.
 1. install Google Gemini CLI: <https://github.com/google-gemini/gemini-cli>
 2. install OpenAI Codex CLI: <https://github.com/openai/codex>
 3. install Claude Code: <https://docs.anthropic.com/en/docs/claude-code/getting-started>
+4. install Opencode CLI
 
 configure them and make sure they can use your preferred billing method (subscription or API); 
 
@@ -48,10 +50,11 @@ once configured, test by :
 
 ## Features
 
-- Query Gemini 3 Pro, GPT-5.3 Codex, or Claude Opus 4.6 with relevant files as
-  context
+- Query Gemini 3 Pro, GPT-5.3 Codex, Claude Opus 4.6, or Opencode with relevant
+  files as context
 - Default model is `gemini-3-pro-preview` when `model` is omitted
-- API mode (`Gemini`/`Codex`) or, preferably, CLI mode (local `gemini`/`codex`/`claude` CLI tools)
+- API mode (`Gemini`/`Codex`) or, preferably, CLI mode (local
+  `gemini`/`codex`/`claude`/`opencode` CLI tools)
 - Customizable system prompt via `~/.grey-so/SYSTEM_PROMPT.md`
 - Single MCP tool (`get_advice`) — minimal context footprint
 
