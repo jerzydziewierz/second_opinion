@@ -1,5 +1,5 @@
 import { z } from 'zod/v4'
-import { ALL_MODELS } from './models.js'
+import { ALL_MODELS, DEFAULT_MODEL } from './models.js'
 
 // Parse allowed models from environment
 const rawAllowedModels = process.env.GREY_SO_ALLOWED_MODELS
@@ -23,7 +23,7 @@ if (enabledModels.length === 0) {
 export const SupportedChatModel = z.enum(enabledModels as [string, ...string[]])
 export type SupportedChatModel = z.infer<typeof SupportedChatModel>
 
-export const fallbackModel = enabledModels[0]
+export const fallbackModel = enabledModels[0] ?? DEFAULT_MODEL
 
 const Config = z.object({
   openaiApiKey: z.string().optional(),

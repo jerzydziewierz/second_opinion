@@ -46,6 +46,7 @@ once configured, test by :
 ## Features
 
 - Query Gemini 3 Pro or GPT-5.3 Codex with relevant files as context
+- Default model is `gemini-3-pro-preview` when `model` is omitted
 - API mode (direct API calls) or CLI mode (local `gemini`/`codex` CLI tools)
 - Customizable system prompt via `~/.grey-so/SYSTEM_PROMPT.md`
 - Single MCP tool (`get_advice`) — minimal context footprint

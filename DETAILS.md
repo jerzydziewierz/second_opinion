@@ -15,6 +15,10 @@
 | `GREY_SO_ALLOWED_MODELS`     | No       | Comma-separated subset to advertise in the tool schema             |
 | `GREY_SO_SYSTEM_PROMPT_PATH` | No       | Custom path to system prompt file                                  |
 
+If the `model` argument is omitted in `get_advice`, it defaults to
+`gemini-3-pro-preview` unless overridden by `GREY_SO_DEFAULT_MODEL` or narrowed
+by `GREY_SO_ALLOWED_MODELS`.
+
 ### CLI mode
 
 Instead of API calls, the server can shell out to locally installed CLI tools.

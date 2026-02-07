@@ -21,7 +21,7 @@ export const GetAdviceArgs = z.object({
   model: SupportedChatModel.optional()
     .default(fallbackModel)
     .describe(
-      'LLM model to use. Use gpt-5.3-codex when user mentions Codex, or gemini-3-preview when user mentions gemini.',
+      'LLM model to use. Defaults to gemini-3-pro-preview (unless overridden by GREY_SO_DEFAULT_MODEL or GREY_SO_ALLOWED_MODELS). Use gpt-5.3-codex when user mentions Codex, or gemini-3-pro-preview when user mentions Gemini.',
     ),
   git_diff: z
     .object({

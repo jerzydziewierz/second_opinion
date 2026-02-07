@@ -47,7 +47,6 @@ describe('GetAdviceArgs', () => {
 
   it('defaults model to a valid enabled model when omitted', () => {
     const parsed = GetAdviceArgs.parse({ prompt: 'hello world' })
-    expect(parsed.model).toBeDefined()
-    expect(ALL_MODELS).toContain(parsed.model)
+    expect(parsed.model).toBe('gemini-3-pro-preview')
   })
 })

@@ -60,6 +60,20 @@ type CliConfig = {
   handleNonZeroExit: (code: number, stderr: string) => Error
 }
 
+function buildCliEnv(model: SupportedChatModelType): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env }
+
+  // Ensure provider CLIs receive API keys if this server was configured with them.
+  if (model.startsWith('gemini-') && config.geminiApiKey && !env.GEMINI_API_KEY) {
+    env.GEMINI_API_KEY = config.geminiApiKey
+  }
+  if (model.startsWith('gpt-') && config.openaiApiKey && !env.OPENAI_API_KEY) {
+    env.OPENAI_API_KEY = config.openaiApiKey
+  }
+
+  return env
+}
+
 /**
  * Creates an executor that delegates to a command-line tool.
  */
@@ -84,6 +98,7 @@ function createCliExecutor(cliConfig: CliConfig): LlmExecutor {
       const fullPrompt = buildFullPrompt(prompt, systemPrompt, filePaths)
       const args = cliConfig.buildArgs(model, fullPrompt)
       const { cliName } = cliConfig
+      const env = buildCliEnv(model)
 
       return new Promise((resolve, reject) => {
         try {
@@ -93,11 +108,14 @@ function createCliExecutor(cliConfig: CliConfig): LlmExecutor {
             filePathsCount: filePaths?.length || 0,
             args: args,
             promptPreview: fullPrompt.slice(0, 300),
+            hasGeminiApiKey: Boolean(env.GEMINI_API_KEY),
+            hasOpenaiApiKey: Boolean(env.OPENAI_API_KEY),
           })
 
           const child = spawn(cliName, args, {
             shell: false,
             stdio: ['ignore', 'pipe', 'pipe'],
+            env,
           })
 
           let stdout = ''

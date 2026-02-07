@@ -70,9 +70,9 @@ beforeEach(() => {
 describe('isCliExecution', () => {
   it('detects CLI mode for Gemini and OpenAI models', () => {
     mockConfig.geminiMode = 'cli'
-    expect(isCliExecution('gemini-2.5-pro')).toBe(true)
+    expect(isCliExecution('gemini-3-pro-preview')).toBe(true)
     mockConfig.geminiMode = 'api'
-    expect(isCliExecution('gemini-2.5-pro')).toBe(false)
+    expect(isCliExecution('gemini-3-pro-preview')).toBe(false)
 
     mockConfig.openaiMode = 'cli'
     expect(isCliExecution('gpt-5.3-codex')).toBe(true)
