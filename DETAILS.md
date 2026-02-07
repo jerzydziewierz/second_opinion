@@ -23,8 +23,7 @@ by `GREY_SO_ALLOWED_MODELS`.
 ### CLI mode
 
 Instead of API calls, the server can shell out to locally installed CLI tools.
-This is useful if you already have the CLIs authenticated or want to use free
-quota.
+This is useful if you already have the CLIs authenticated.
 
 **Gemini CLI:**
 
@@ -105,14 +104,6 @@ The agent will make parallel `get_advice` calls and summarize where the models
 agree or differ.
 
 ## Development
-
-```bash
-git clone <repo-url> && cd grey-so
-npm install
-npm run build
-npm link
-claude mcp add grey-so -- grey-so
-```
 
 For development without rebuilding:
 

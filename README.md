@@ -10,20 +10,22 @@ as context.
 
 # Prerequisities
 
-It is assumed that you will be using claude-code as the primary driver, although
-reverse usage is likely possible too;
+It is assumed that you will be using claude-code as the primary driver, although the tool has also been tested for gemini and codex.
 
 It is most recommended that you use the "cli method" as it gives the subagents
 capabilities to explore the repo as needed.
 
-install Google/gemini from <CLAUDE: find correct link> and OpenAI/codex from
-<CLAUDE: find correct link>; configure both them and make sure they can use your
-preferred billing method (subscription or API); note that as of 2026-02,
-subscription is approx. 20x cheaper than API;
+1. install Google Gemini CLI: <https://github.com/google-gemini/gemini-cli>
+2. install OpenAI Codex CLI: <https://github.com/openai/codex>
+3. install Claude Code: <https://docs.anthropic.com/en/docs/claude-code/getting-started>
+
+configure them and make sure they can use your preferred billing method (subscription or API); 
+
+note that as of 2026-02, subscription is approx. 20x cheaper than API;
 
 once configured, test by :
 
-"testing: ask both gemini and GPT, what is the capital of Paris?"
+"testing: use get-opinion tool and ask all models -  what is the capital of Paris?"
 
 ## Example
 
@@ -70,8 +72,7 @@ mean that agentic features (e.g. active exploration) will be severely limited.
 Claude support is currently CLI-only (`CLAUDE_MODE=cli`). API mode for Claude is
 not implemented yet.
 
-Important: always set `GEMINI_API_KEY` when using Gemini in API mode. If
-`GEMINI_API_KEY` is missing, `codex` will not be able to load `gemini`.
+Troubleshooting: If you are using API method in any of the sub-agents, always set their respective API key here; e.g `GEMINI_API_KEY` when using Gemini in API mode. otherwise the given subagent might refuse to run. 
 
 ## Further reading
 
