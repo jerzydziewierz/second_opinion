@@ -1,0 +1,70 @@
+{
+  "name": "consult-llm-mcp",
+  "version": "2.0.1",
+  "description": "MCP server for consulting powerful AI models",
+  "type": "module",
+  "main": "dist/main.js",
+  "bin": {
+    "consult-llm-mcp": "./dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/main.ts",
+    "start": "node dist/main.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "format": "prettier --write .",
+    "check": "concurrently \"pnpm:check:*\"",
+    "check:types": "tsc --noEmit",
+    "check:format": "prettier --write .",
+    "check:lint": "eslint .",
+    "check:test": "vitest run",
+    "install-global": "npm run build && npm install -g .",
+    "prepublishOnly": "pnpm run check && npm run build",
+    "publish:dry": "npm publish --dry-run",
+    "publish:patch": "npm version patch && npm publish && git push && git push --tags",
+    "publish:minor": "npm version minor && npm publish && git push && git push --tags",
+    "publish:major": "npm version major && npm publish && git push && git push --tags"
+  },
+  "keywords": [
+    "mcp",
+    "openai",
+    "gemini",
+    "llm",
+    "ai"
+  ],
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raine/consult-llm-mcp.git"
+  },
+  "homepage": "https://github.com/raine/consult-llm-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/raine/consult-llm-mcp/issues"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "clipboardy": "^5.0.0",
+    "openai": "^6.9.1",
+    "prettier": "^3.6.2",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/node": "^24.0.3",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.38.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.46.2",
+    "vitest": "^3.0.0"
+  }
+}
