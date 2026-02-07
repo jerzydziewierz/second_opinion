@@ -5,7 +5,7 @@ import { format } from 'prettier'
 
 const xdgStateHome =
   process.env.XDG_STATE_HOME || join(homedir(), '.local', 'state')
-const logDir = join(xdgStateHome, 'consult-llm-mcp')
+const logDir = join(xdgStateHome, 'grey-so')
 const logFile = join(logDir, 'mcp.log')
 
 try {
@@ -60,9 +60,7 @@ export async function logResponse(
 }
 
 export function logServerStart(version: string) {
-  logToFile(
-    `MCP SERVER STARTED - consult-llm-mcp v${version}\n${'='.repeat(80)}`,
-  )
+  logToFile(`MCP SERVER STARTED - grey-so v${version}\n${'='.repeat(80)}`)
 }
 
 export function logConfiguration(config: Record<string, unknown>) {

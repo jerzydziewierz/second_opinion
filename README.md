@@ -1,4 +1,4 @@
-# Consult LLM MCP
+# Second Opinion MCP
 
 An MCP server that lets Claude Code consult stronger AI models (GPT-5.2, Gemini
 3.0 Pro, DeepSeek Reasoner) when Sonnet has you running in circles and you need
@@ -10,7 +10,7 @@ to bring in the heavy artillery.
 
 ⏺ Let me consult Gemini to understand the Neovim treesitter API changes:
 
-⏺ consult-llm:consult_llm (MCP)(prompt: "Neovim plugin broken due to treesitter
+⏺ grey-so:get_advice (MCP)(prompt: "Neovim plugin broken due to treesitter
                                 API changes...", files: ["lua/testonly.lua"],
                                 model: "gemini-2.5-pro")
   ⎿ The issue is that iter_matches() can return nil nodes in newer Neovim
@@ -41,7 +41,7 @@ to bring in the heavy artillery.
 1. **Add to Claude Code**:
 
    ```bash
-   claude mcp add consult-llm -e GEMINI_API_KEY=your_key -- npx -y consult-llm-mcp
+   claude mcp add grey-so -e GEMINI_API_KEY=your_key -- npx -y grey-so
    ```
 
    For global availability across projects, add `--scope user`.
@@ -50,12 +50,12 @@ to bring in the heavy artillery.
    <summary>Using multiple API keys or CLI mode</summary>
 
    ```bash
-   claude mcp add consult-llm \
+   claude mcp add grey-so \
      -e OPENAI_API_KEY=your_openai_key \
      -e GEMINI_API_KEY=your_gemini_key \
      -e DEEPSEEK_API_KEY=your_deepseek_key \
      -e GEMINI_MODE=cli \
-     -- npx -y consult-llm-mcp
+     -- npx -y grey-so
    ```
 
    </details>
@@ -63,7 +63,7 @@ to bring in the heavy artillery.
 2. **Verify connection** with `/mcp`:
 
    ```
-   ❯ 1. consult-llm            ✔ connected
+   ❯ 1. grey-so            ✔ connected
    ```
 
 3. **Ask a question**:
@@ -99,7 +99,7 @@ Some real-world examples. Click to expand.
      **Original Text**: "Hello! Nice weather, isn't it?"
      … +43 lines (ctrl+r to expand)
 
-⏺ consult-llm:consult_llm (MCP)(model: "gemini-2.5-pro", files: ["/project/hint
+⏺ grey-so:get_advice (MCP)(model: "gemini-2.5-pro", files: ["/project/hint
                                 -segmentation-issue.md","/project/web/src/compo
                                 nents/HintsText.tsx","/project/web/src/utils/hi
                                 nts.ts","/project/server/src/routes/public/hint
@@ -136,7 +136,7 @@ Some real-world examples. Click to expand.
 ⏺ I'll use web mode to copy the formatted prompt to your clipboard so you can
   paste it into any browser-based LLM service.
 
-⏺ consult-llm:consult_llm (MCP)(prompt: "What is the best approach to implement a
+⏺ grey-so:get_advice (MCP)(prompt: "What is the best approach to implement a
                                  -b/--background flag for the \"workmux add\" command that
                                  creates a tmux window in the background without switching to
                                  it?\n\nThe current implementation automatically switches to
@@ -192,7 +192,7 @@ This is useful when:
 
 ⏺ Let me consult with a more powerful AI to understand the current Neovim treesitter API changes:
 
-⏺ consult-llm:consult_llm (MCP)(prompt: "I'm debugging a Neovim plugin that's broken due to treesitter API changes. The error is \"attempt to call method 'child' (a nil value)\" on line 92. The
+⏺ grey-so:get_advice (MCP)(prompt: "I'm debugging a Neovim plugin that's broken due to treesitter API changes. The error is \"attempt to call method 'child' (a nil value)\" on line 92. The
                                code is trying to access child nodes from treesitter matches but the API seems to have changed in newer Neovim versions.\n\nHere's the problematic
                                code:\n```lua\nfor _, match, _ in parsed_query:iter_matches(root, bufnr, start_row, end_row) do\n    for id, node in pairs(match) do\n        local name =
                                parsed_query.captures[id]\n        if name == \"call\" and node then\n            local child = node:child(0)  -- ERROR HERE\n            if child then\n
@@ -254,7 +254,7 @@ using tab to autocomplete. Ask gemini and codex
 ⏺ I'll consult both Gemini and Codex about making the branch completions dynamic (only
   calling git when tab-completing). Let me gather the relevant context first.
 
-⏺ consult-llm - consult_llm (MCP)(prompt: "I have a Rust CLI tool using clap that needs dynamic shell completions. Currently, the branch completions are generated at completion script
+⏺ grey-so - get_advice (MCP)(prompt: "I have a Rust CLI tool using clap that needs dynamic shell completions. Currently, the branch completions are generated at completion script
                                  generation time via `possible_values()`. Instead, I need the git operations to only run when the user presses TAB to autocomplete.\n\nCurrent setup:\n1.
                                  `WorktreeBranchParser` implements `TypedValueParser` with `possible_values()` that calls git\n2. Shell completions are generated via clap_complete's
                                  `generate()` function\n3. The completions are sourced at shell startup: `source <(workmux completions zsh)`\n\nThe problem: Running `workmux completions
@@ -266,7 +266,7 @@ using tab to autocomplete. Ask gemini and codex
     … +116 lines (ctrl+o to expand)
 
 
-⏺ consult-llm - consult_llm (MCP)(prompt: "I have a Rust CLI tool using clap that needs dynamic shell completions. Currently, the branch completions are generated at completion script
+⏺ grey-so - get_advice (MCP)(prompt: "I have a Rust CLI tool using clap that needs dynamic shell completions. Currently, the branch completions are generated at completion script
                                  generation time via `possible_values()`. Instead, I need the git operations to only run when the user presses TAB to autocomplete.\n\nCurrent setup:\n1.
                                  `WorktreeBranchParser` implements `TypedValueParser` with `possible_values()` that calls git\n2. Shell completions are generated via clap_complete's
                                  `generate()` function\n3. The completions are sourced at shell startup: `source <(workmux completions zsh)`\n\nThe problem: Running `workmux completions
@@ -299,7 +299,7 @@ confidence in the approach.
 
 ## Modes
 
-consult-llm-mcp supports three modes of operation:
+grey-so supports three modes of operation:
 
 | Mode    | Description                   | When to use                                                      |
 | ------- | ----------------------------- | ---------------------------------------------------------------- |
@@ -331,7 +331,7 @@ Use Gemini's local CLI to take advantage of Google's
 **Setup:**
 
 ```bash
-claude mcp add consult-llm -e GEMINI_MODE=cli -- npx -y consult-llm-mcp
+claude mcp add grey-so -e GEMINI_MODE=cli -- npx -y grey-so
 ```
 
 #### Codex CLI
@@ -346,7 +346,7 @@ Use OpenAI's Codex CLI for OpenAI models.
 **Setup:**
 
 ```bash
-claude mcp add consult-llm -e OPENAI_MODE=cli -- npx -y consult-llm-mcp
+claude mcp add grey-so -e OPENAI_MODE=cli -- npx -y grey-so
 ```
 
 <!-- prettier-ignore -->
@@ -379,7 +379,7 @@ See the "Using web mode..." example above for a concrete transcript.
 - `GEMINI_API_KEY` - Your Google AI API key (required for Gemini models in API
   mode)
 - `DEEPSEEK_API_KEY` - Your DeepSeek API key (required for DeepSeek models)
-- `CONSULT_LLM_DEFAULT_MODEL` - Override the default model (optional)
+- `GREY_SO_DEFAULT_MODEL` - Override the default model (optional)
   - Options: `gpt-5.2` (default), `gemini-2.5-pro`, `gemini-3-pro-preview`,
     `deepseek-reasoner`, `gpt-5.3-codex`, `gpt-5.2-codex`, `gpt-5.1-codex-max`,
     `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5.1`
@@ -391,23 +391,22 @@ See the "Using web mode..." example above for a concrete transcript.
   - CLI mode uses the system-installed `codex` CLI tool
 - `CODEX_REASONING_EFFORT` - Configure reasoning effort for Codex CLI (optional)
   - See [Codex CLI](#codex-cli) for details and available options
-- `CONSULT_LLM_ALLOWED_MODELS` - List of models to advertise (optional)
+- `GREY_SO_ALLOWED_MODELS` - List of models to advertise (optional)
   - Comma-separated list, e.g., `gpt-5.2,gemini-3-pro-preview`
   - When set, only these models appear in the tool schema
-  - If `CONSULT_LLM_DEFAULT_MODEL` is set, it must be in this list
+  - If `GREY_SO_DEFAULT_MODEL` is set, it must be in this list
   - See [Tips](#controlling-which-models-claude-uses) for usage examples
-- `CONSULT_LLM_SYSTEM_PROMPT_PATH` - Custom path to system prompt file
-  (optional)
-  - Overrides the default `~/.consult-llm-mcp/SYSTEM_PROMPT.md` location
+- `GREY_SO_SYSTEM_PROMPT_PATH` - Custom path to system prompt file (optional)
+  - Overrides the default `~/.grey-so/SYSTEM_PROMPT.md` location
   - Useful for project-specific prompts
 
 ### Custom system prompt
 
 You can customize the system prompt used when consulting LLMs by creating a
-`SYSTEM_PROMPT.md` file in `~/.consult-llm-mcp/`:
+`SYSTEM_PROMPT.md` file in `~/.grey-so/`:
 
 ```bash
-npx consult-llm-mcp init-prompt
+npx grey-so init-prompt
 ```
 
 This creates a placeholder file with the default system prompt that you can edit
@@ -418,15 +417,15 @@ To revert to the default prompt, simply delete the `SYSTEM_PROMPT.md` file.
 
 #### Custom prompt path
 
-Use `CONSULT_LLM_SYSTEM_PROMPT_PATH` to override the default prompt file
-location. This is useful for project-specific prompts that you can commit to
-your repository:
+Use `GREY_SO_SYSTEM_PROMPT_PATH` to override the default prompt file location.
+This is useful for project-specific prompts that you can commit to your
+repository:
 
 ```bash
-claude mcp add consult-llm \
+claude mcp add grey-so \
   -e GEMINI_API_KEY=your_key \
-  -e CONSULT_LLM_SYSTEM_PROMPT_PATH=/path/to/project/.consult-llm-mcp/SYSTEM_PROMPT.md \
-  -- npx -y consult-llm-mcp
+  -e GREY_SO_SYSTEM_PROMPT_PATH=/path/to/project/.grey-so/SYSTEM_PROMPT.md \
+  -- npx -y grey-so
 ```
 
 ## Tips
@@ -434,35 +433,34 @@ claude mcp add consult-llm \
 ### Controlling which models Claude uses
 
 When you ask Claude to "consult an LLM" without specifying a model, it picks one
-from the available options in the tool schema. The `CONSULT_LLM_DEFAULT_MODEL`
-only affects the fallback when no model is specified in the tool call.
+from the available options in the tool schema. The `GREY_SO_DEFAULT_MODEL` only
+affects the fallback when no model is specified in the tool call.
 
-To control which models Claude can choose from, use
-`CONSULT_LLM_ALLOWED_MODELS`:
+To control which models Claude can choose from, use `GREY_SO_ALLOWED_MODELS`:
 
 ```bash
-claude mcp add consult-llm \
+claude mcp add grey-so \
   -e GEMINI_API_KEY=your_key \
-  -e CONSULT_LLM_ALLOWED_MODELS='gemini-3-pro-preview,gpt-5.2-codex' \
-  -- npx -y consult-llm-mcp
+  -e GREY_SO_ALLOWED_MODELS='gemini-3-pro-preview,gpt-5.2-codex' \
+  -- npx -y grey-so
 ```
 
 This restricts the tool schema to only advertise these models. For example, to
 ensure Claude always uses Gemini 3 Pro:
 
 ```bash
-claude mcp add consult-llm \
+claude mcp add grey-so \
   -e GEMINI_API_KEY=your_key \
-  -e CONSULT_LLM_ALLOWED_MODELS='gemini-3-pro-preview' \
-  -- npx -y consult-llm-mcp
+  -e GREY_SO_ALLOWED_MODELS='gemini-3-pro-preview' \
+  -- npx -y grey-so
 ```
 
 Alternatively, use a [slash command](#example-slash-command) with hardcoded
 model names for guaranteed model selection.
 
-## MCP tool: consult_llm
+## MCP tool: get_advice
 
-The server provides a single tool called `consult_llm` for asking powerful AI
+The server provides a single tool called `get_advice` for asking powerful AI
 models complex questions.
 
 ### Parameters
@@ -506,9 +504,8 @@ models complex questions.
 
 ## Logging
 
-All prompts and responses are logged to
-`$XDG_STATE_HOME/consult-llm-mcp/mcp.log` (defaults to
-`~/.local/state/consult-llm-mcp/mcp.log`) with:
+All prompts and responses are logged to `$XDG_STATE_HOME/grey-so/mcp.log`
+(defaults to `~/.local/state/grey-so/mcp.log`) with:
 
 - Tool call parameters
 - Full prompts and responses
@@ -518,7 +515,7 @@ All prompts and responses are logged to
 <summary>Example</summary>
 
 ```
-[2025-06-22T20:16:04.673Z] TOOL CALL: consult_llm
+[2025-06-22T20:16:04.673Z] TOOL CALL: get_advice
 Arguments: {
   "files": [
     "refactor-analysis.md",
@@ -586,11 +583,11 @@ need reliability or custom instructions.
 ## Example skill
 
 Here's an example [Claude Code skill](https://code.claude.com/docs/en/skills)
-that uses the `consult_llm` MCP tool to create commands like "ask gemini" or
-"ask codex". See [examples/SKILL.md](examples/SKILL.md) for the full content.
+that uses the `get_advice` MCP tool to create commands like "ask gemini" or "ask
+codex". See [examples/SKILL.md](examples/SKILL.md) for the full content.
 
-Save it as `~/.claude/skills/consult-llm/SKILL.md` and you can then use it by
-typing "ask gemini about X" or "ask codex about X" in Claude Code.
+Save it as `~/.claude/skills/grey-so/SKILL.md` and you can then use it by typing
+"ask gemini about X" or "ask codex about X" in Claude Code.
 
 This one is not strictly necessary either, Claude (or other agent) can infer
 from the schema that "Ask gemini" should call this MCP, but it might be helpful
@@ -600,7 +597,7 @@ in case you want to have more precise control over how the agent calls this MCP.
 
 Here's an example
 [Claude Code slash command](https://code.claude.com/docs/en/slash-commands) that
-uses the `consult_llm` MCP tool. See [examples/consult.md](examples/consult.md)
+uses the `get_advice` MCP tool. See [examples/consult.md](examples/consult.md)
 for the full content.
 
 Save it as `~/.claude/commands/consult.md` and you can then use it by typing
@@ -613,8 +610,8 @@ To work on the MCP server locally and use your development version:
 1. Clone the repository and install dependencies:
 
    ```bash
-   git clone https://github.com/yourusername/consult-llm-mcp.git
-   cd consult-llm-mcp
+   git clone https://github.com/yourusername/grey-so.git
+   cd grey-so
    npm install
    ```
 
@@ -632,7 +629,7 @@ To work on the MCP server locally and use your development version:
 
 4. Add the MCP server to Claude Code using the global command:
    ```bash
-   claude mcp add consult-llm -- consult-llm-mcp
+   claude mcp add grey-so -- grey-so
    ```
 
 Now when you make changes:
@@ -643,7 +640,7 @@ Now when you make changes:
 Alternatively, you can use the dev script for development without building:
 
 ```bash
-claude mcp add consult-llm -- npm run dev
+claude mcp add grey-so -- npm run dev
 ```
 
 This runs the TypeScript source directly with `tsx`, allowing faster iteration

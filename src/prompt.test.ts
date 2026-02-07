@@ -11,7 +11,7 @@ describe('processFiles', () => {
   let testFile2: string
 
   beforeEach(() => {
-    testDir = join(tmpdir(), `consult-llm-test-${Date.now()}`)
+    testDir = join(tmpdir(), `grey-so-test-${Date.now()}`)
     mkdirSync(testDir, { recursive: true })
 
     testFile1 = join(testDir, 'test1.ts')
@@ -82,7 +82,7 @@ describe('buildPrompt', () => {
   let testFile: string
 
   beforeEach(() => {
-    testDir = join(tmpdir(), `consult-llm-test-${Date.now()}`)
+    testDir = join(tmpdir(), `grey-so-test-${Date.now()}`)
     mkdirSync(testDir, { recursive: true })
     testFile = join(testDir, 'example.ts')
     writeFileSync(testFile, 'const example = "test";')

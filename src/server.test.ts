@@ -4,14 +4,12 @@ import { tmpdir } from 'os'
 import { join, resolve } from 'path'
 import type { Config } from './config.js'
 import type { SupportedChatModel } from './schema.js'
-import { handleConsultLlm, isCliExecution, initSystemPrompt } from './server.js'
+import { handleGetAdvice, isCliExecution, initSystemPrompt } from './server.js'
 
 const processFilesMock = vi.hoisted(() => vi.fn())
 const generateGitDiffMock = vi.hoisted(() => vi.fn())
 const buildPromptMock = vi.hoisted(() => vi.fn())
 const queryLlmMock = vi.hoisted(() => vi.fn())
-const getSystemPromptMock = vi.hoisted(() => vi.fn())
-const copyToClipboardMock = vi.hoisted(() => vi.fn())
 const logToolCallMock = vi.hoisted(() => vi.fn())
 const logPromptMock = vi.hoisted(() => vi.fn())
 const logResponseMock = vi.hoisted(() => vi.fn())
@@ -40,9 +38,7 @@ vi.mock('./prompt-builder.js', () => ({ buildPrompt: buildPromptMock }))
 vi.mock('./llm-query.js', () => ({ queryLlm: queryLlmMock }))
 vi.mock('./system-prompt.js', () => ({
   DEFAULT_SYSTEM_PROMPT: '# default prompt',
-  getSystemPrompt: getSystemPromptMock,
 }))
-vi.mock('./clipboard.js', () => ({ copyToClipboard: copyToClipboardMock }))
 vi.mock('./logger.js', () => ({
   logToolCall: logToolCallMock,
   logPrompt: logPromptMock,
@@ -59,8 +55,6 @@ beforeEach(() => {
     response: 'ok',
     costInfo: null,
   })
-  getSystemPromptMock.mockReset().mockReturnValue('SYSTEM PROMPT')
-  copyToClipboardMock.mockReset().mockResolvedValue(undefined)
   logToolCallMock.mockReset()
   logPromptMock.mockReset()
   logResponseMock.mockReset()
@@ -79,23 +73,23 @@ describe('isCliExecution', () => {
     expect(isCliExecution('gemini-2.5-pro')).toBe(false)
 
     mockConfig.openaiMode = 'cli'
-    expect(isCliExecution('gpt-5.1')).toBe(true)
-    expect(isCliExecution('gpt-5.2')).toBe(true)
+    expect(isCliExecution('gpt-5.3-codex')).toBe(true)
+    expect(isCliExecution('gpt-5.3-codex')).toBe(true)
     mockConfig.openaiMode = 'api'
-    expect(isCliExecution('gpt-5.1')).toBe(false)
+    expect(isCliExecution('gpt-5.3-codex')).toBe(false)
   })
 })
 
-describe('handleConsultLlm', () => {
+describe('handleGetAdvice', () => {
   it('validates input', async () => {
-    await expect(handleConsultLlm({})).rejects.toThrow(
+    await expect(handleGetAdvice({})).rejects.toThrow(
       'Invalid request parameters',
     )
   })
 
   it('inlines files and git diff for API mode', async () => {
-    mockConfig.defaultModel = 'gpt-5.1' as SupportedChatModel
-    const result = await handleConsultLlm({
+    mockConfig.defaultModel = 'gpt-5.3-codex' as SupportedChatModel
+    const result = await handleGetAdvice({
       prompt: 'help me',
       files: ['file1.ts'],
       git_diff: { files: ['src/index.ts'] },
@@ -114,26 +108,27 @@ describe('handleConsultLlm', () => {
     )
     expect(queryLlmMock).toHaveBeenCalledWith(
       'BUILT PROMPT',
-      'gpt-5.1',
+      'gpt-5.3-codex',
       undefined,
     )
     expect(result.content[0]?.text).toBe('ok')
   })
 
   it('uses explicit model even when config default exists', async () => {
-    mockConfig.defaultModel = 'gpt-5.1' as SupportedChatModel
-    await handleConsultLlm({ prompt: 'hello', model: 'gpt-5.2' })
+    mockConfig.defaultModel = 'gpt-5.3-codex' as SupportedChatModel
+    await handleGetAdvice({ prompt: 'hello', model: 'gpt-5.3-codex' })
     expect(queryLlmMock).toHaveBeenCalledWith(
       'BUILT PROMPT',
-      'gpt-5.2',
+      'gpt-5.3-codex',
       undefined,
     )
   })
 
   it('builds CLI prompts without file contents', async () => {
     mockConfig.openaiMode = 'cli'
-    await handleConsultLlm({
+    await handleGetAdvice({
       prompt: 'cli prompt',
+      model: 'gpt-5.3-codex',
       files: ['./foo.ts'],
       git_diff: { files: ['foo.ts'], base_ref: 'main', repo_path: '/repo' },
     })
@@ -153,35 +148,13 @@ describe('handleConsultLlm', () => {
 
       cli prompt"
     `)
-    expect(model).toBe('gpt-5.2')
+    expect(model).toBe('gpt-5.3-codex')
     expect(filePaths).toEqual([resolve('./foo.ts')])
-  })
-
-  it('handles web mode by copying to clipboard and skipping LLM call', async () => {
-    const result = await handleConsultLlm({
-      prompt: 'web prompt',
-      files: ['file.ts'],
-      web_mode: true,
-    })
-
-    expect(copyToClipboardMock).toHaveBeenCalled()
-    const [copied] = copyToClipboardMock.mock.calls[0] as [string]
-    expect(copied).toMatchInlineSnapshot(`
-      "# System Prompt
-
-      SYSTEM PROMPT
-
-      # User Prompt
-
-      BUILT PROMPT"
-    `)
-    expect(queryLlmMock).not.toHaveBeenCalled()
-    expect(result.content[0]?.text).toContain('Prompt copied to clipboard')
   })
 
   it('propagates query errors', async () => {
     queryLlmMock.mockRejectedValueOnce(new Error('boom'))
-    await expect(handleConsultLlm({ prompt: 'oops' })).rejects.toThrow('boom')
+    await expect(handleGetAdvice({ prompt: 'oops' })).rejects.toThrow('boom')
   })
 })
 
@@ -189,7 +162,7 @@ describe('initSystemPrompt', () => {
   let tempHome: string
 
   beforeEach(() => {
-    tempHome = mkdtempSync(join(tmpdir(), 'consult-llm-home-'))
+    tempHome = mkdtempSync(join(tmpdir(), 'grey-so-home-'))
   })
 
   afterEach(() => {
@@ -202,7 +175,7 @@ describe('initSystemPrompt', () => {
   it('creates a default system prompt file', () => {
     const exitSpy = stubExit()
     initSystemPrompt(tempHome)
-    const promptPath = join(tempHome, '.consult-llm-mcp', 'SYSTEM_PROMPT.md')
+    const promptPath = join(tempHome, '.grey-so', 'SYSTEM_PROMPT.md')
     const contents = readFileSync(promptPath, 'utf-8')
     expect(contents).toBe('# default prompt')
     expect(exitSpy).toHaveBeenCalledWith(0)

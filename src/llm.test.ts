@@ -13,7 +13,6 @@ const mockConfig = vi.hoisted(
     ({
       openaiApiKey: 'openai',
       geminiApiKey: 'gemini',
-      deepseekApiKey: 'deepseek',
       openaiMode: 'api',
       geminiMode: 'api',
       defaultModel: undefined,
@@ -75,7 +74,6 @@ beforeEach(() => {
   Object.assign(mockConfig, {
     openaiApiKey: 'openai',
     geminiApiKey: 'gemini',
-    deepseekApiKey: 'deepseek',
     openaiMode: 'api',
     geminiMode: 'api',
     defaultModel: undefined,
@@ -95,16 +93,16 @@ describe('API executor', () => {
     })
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-    const executor = getExecutorForModel('gpt-5.1')
+    const executor = getExecutorForModel('gpt-5.3-codex')
     const result = await executor.execute(
       'user prompt',
-      'gpt-5.1',
+      'gpt-5.3-codex',
       'system prompt',
       ['/tmp/file.ts'],
     )
 
     expect(createCompletionMock).toHaveBeenCalledWith({
-      model: 'gpt-5.1',
+      model: 'gpt-5.3-codex',
       messages: [
         { role: 'system', content: 'system prompt' },
         { role: 'user', content: 'user prompt' },
@@ -121,9 +119,9 @@ describe('API executor', () => {
       choices: [{ message: {} }],
     })
 
-    const executor = getExecutorForModel('gpt-5.1')
+    const executor = getExecutorForModel('gpt-5.3-codex')
     await expect(
-      executor.execute('prompt', 'gpt-5.1', 'system'),
+      executor.execute('prompt', 'gpt-5.3-codex', 'system'),
     ).rejects.toThrow('No response from the model via API')
   })
 })
@@ -138,8 +136,8 @@ describe('CLI executor', () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.1')
-    const promise = executor.execute('user', 'gpt-5.1', 'system', [
+    const executor = getExecutorForModel('gpt-5.3-codex')
+    const promise = executor.execute('user', 'gpt-5.3-codex', 'system', [
       '/absolute/path/to/file.ts',
     ])
 
@@ -151,7 +149,7 @@ describe('CLI executor', () => {
     expect(cliArgs[0]).toBe('exec')
     expect(cliArgs[1]).toBe('--skip-git-repo-check')
     expect(cliArgs[2]).toBe('-m')
-    expect(cliArgs[3]).toBe('gpt-5.1')
+    expect(cliArgs[3]).toBe('gpt-5.3-codex')
     expect(cliArgs[4]).toContain('system')
     expect(cliArgs[4]).toContain('user')
     expect(cliArgs[4]).toContain('Files: @')
@@ -166,8 +164,8 @@ describe('CLI executor', () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.1')
-    const promise = executor.execute('user', 'gpt-5.1', 'system')
+    const executor = getExecutorForModel('gpt-5.3-codex')
+    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
 
     resolveCliExecution(child, { stderr: 'boom', code: 2 })
 
@@ -182,8 +180,8 @@ describe('CLI executor', () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.1')
-    const promise = executor.execute('user', 'gpt-5.1', 'system')
+    const executor = getExecutorForModel('gpt-5.3-codex')
+    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
 
     resolveCliExecution(child, { stdout: 'result', code: 0 })
 
@@ -201,8 +199,8 @@ describe('CLI executor', () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gemini-2.5-pro')
-    const promise = executor.execute('user', 'gemini-2.5-pro', 'system')
+    const executor = getExecutorForModel('gemini-3-pro-preview')
+    const promise = executor.execute('user', 'gemini-3-pro-preview', 'system')
 
     resolveCliExecution(child, {
       stderr: 'RESOURCE_EXHAUSTED: quota exceeded',
@@ -217,8 +215,8 @@ describe('CLI executor', () => {
     const child = createChildProcess()
     setupSpawn(child)
 
-    const executor = getExecutorForModel('gpt-5.1')
-    const promise = executor.execute('user', 'gpt-5.1', 'system')
+    const executor = getExecutorForModel('gpt-5.3-codex')
+    const promise = executor.execute('user', 'gpt-5.3-codex', 'system')
 
     child.emit('error', new Error('not found'))
 
@@ -233,27 +231,16 @@ describe('CLI executor', () => {
       throw new Error('sync failure')
     })
 
-    const executor = getExecutorForModel('gpt-5.1')
-    await expect(executor.execute('user', 'gpt-5.1', 'system')).rejects.toThrow(
+    const executor = getExecutorForModel('gpt-5.3-codex')
+    await expect(
+      executor.execute('user', 'gpt-5.3-codex', 'system'),
+    ).rejects.toThrow(
       'Synchronous error while trying to spawn codex: sync failure',
     )
   })
 })
 
 describe('executor selection', () => {
-  it('uses deepseek API client', async () => {
-    createCompletionMock.mockResolvedValue({
-      choices: [{ message: { content: 'deepseek' } }],
-    })
-    const executor = getExecutorForModel('deepseek-reasoner')
-    const result = await executor.execute(
-      'prompt',
-      'deepseek-reasoner',
-      'system',
-    )
-    expect(result.response).toBe('deepseek')
-  })
-
   it('throws on unknown models', () => {
     expect(() =>
       getExecutorForModel('mystery-model' as unknown as SupportedChatModel),

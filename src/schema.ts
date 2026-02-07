@@ -6,7 +6,7 @@ import { SupportedChatModel, fallbackModel } from './config.js'
 export { ALL_MODELS, SupportedChatModel }
 export type { SupportedChatModel as SupportedChatModelType }
 
-export const ConsultLlmArgs = z.object({
+export const GetAdviceArgs = z.object({
   files: z
     .array(z.string())
     .optional()
@@ -21,14 +21,7 @@ export const ConsultLlmArgs = z.object({
   model: SupportedChatModel.optional()
     .default(fallbackModel)
     .describe(
-      'LLM model to use. Prefer gpt-5.1-codex-max when user mentions Codex. This parameter is ignored when `web_mode` is `true`.',
-    ),
-  web_mode: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe(
-      "If true, copy the formatted prompt to the clipboard instead of querying an LLM. When true, the `model` parameter is ignored. Use this to paste the prompt into browser-based LLM services. IMPORTANT: Only use this when the user specifically requests it. When true, wait for the user to provide the external LLM's response before proceeding with any implementation.",
+      'LLM model to use. Use gpt-5.3-codex when user mentions Codex, or gemini-3-preview when user mentions gemini.',
     ),
   git_diff: z
     .object({
@@ -56,16 +49,16 @@ export const ConsultLlmArgs = z.object({
     ),
 })
 
-const consultLlmInputSchema = z.toJSONSchema(ConsultLlmArgs, {
+const getAdviceInputSchema = z.toJSONSchema(GetAdviceArgs, {
   target: 'openapi-3.0',
 })
 
 export const toolSchema = {
-  name: 'consult_llm',
-  description: `Ask a more powerful AI for help with complex problems. Provide your question in the prompt field and always include relevant code files as context.
+  name: 'get_advice',
+  description: `Ask a second, different AI for help with the problem at hand. it might have an original idea or approach that you did not think about so far. Provide your question in the prompt field and always include relevant code files as context.
 
-Be specific about what you want: code implementation, code review, bug analysis, architecture advice, etc.
+Be specific about what you want: architecture advice, code implementation, document review, bug research, or anything else.
 
 IMPORTANT: Ask neutral, open-ended questions. Avoid suggesting specific solutions or alternatives in your prompt as this can bias the analysis. Instead of "Should I use X or Y approach?", ask "What's the best approach for this problem?" Let the consultant LLM provide unbiased recommendations.`,
-  inputSchema: consultLlmInputSchema,
+  inputSchema: getAdviceInputSchema,
 } as const

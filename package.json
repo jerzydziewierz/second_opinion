@@ -1,11 +1,11 @@
 {
-  "name": "consult-llm-mcp",
+  "name": "grey-so",
   "version": "2.0.1",
-  "description": "MCP server for consulting powerful AI models",
+  "description": "Get second opinion from Gemini or GPT-5-codex. Maximum simplicity to save context.",
   "type": "module",
   "main": "dist/main.js",
   "bin": {
-    "consult-llm-mcp": "./dist/main.js"
+    "grey-so": "./dist/main.js"
   },
   "scripts": {
     "build": "tsc",
@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "format": "prettier --write .",
-    "check": "concurrently \"pnpm:check:*\"",
+    "check": "concurrently \"npm:check:*\"",
     "check:types": "tsc --noEmit",
     "check:format": "prettier --write .",
     "check:lint": "eslint .",
@@ -36,11 +36,11 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/raine/consult-llm-mcp.git"
+    "url": ""
   },
-  "homepage": "https://github.com/raine/consult-llm-mcp#readme",
+  "homepage": "",
   "bugs": {
-    "url": "https://github.com/raine/consult-llm-mcp/issues"
+    "url": ""
   },
   "files": [
     "dist",
@@ -52,7 +52,6 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.0",
-    "clipboardy": "^5.0.0",
     "openai": "^6.9.1",
     "prettier": "^3.6.2",
     "zod": "^4.1.12"

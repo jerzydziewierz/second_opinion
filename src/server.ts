@@ -5,11 +5,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { config } from './config.js'
-import {
-  ConsultLlmArgs,
-  toolSchema,
-  type SupportedChatModel,
-} from './schema.js'
+import { GetAdviceArgs, toolSchema, type SupportedChatModel } from './schema.js'
 import { processFiles } from './file.js'
 import { generateGitDiff } from './git.js'
 import { buildPrompt } from './prompt-builder.js'
@@ -21,8 +17,7 @@ import {
   logServerStart,
   logConfiguration,
 } from './logger.js'
-import { DEFAULT_SYSTEM_PROMPT, getSystemPrompt } from './system-prompt.js'
-import { copyToClipboard } from './clipboard.js'
+import { DEFAULT_SYSTEM_PROMPT } from './system-prompt.js'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { dirname, join, resolve } from 'path'
 import { fileURLToPath } from 'url'
@@ -36,7 +31,7 @@ const SERVER_VERSION = packageJson.version
 
 const server = new Server(
   {
-    name: 'consult_llm',
+    name: 'grey_so',
     version: SERVER_VERSION,
   },
   {
@@ -62,8 +57,8 @@ export function isCliExecution(model: SupportedChatModel): boolean {
   return false
 }
 
-export async function handleConsultLlm(args: unknown) {
-  const parseResult = ConsultLlmArgs.safeParse(args)
+export async function handleGetAdvice(args: unknown) {
+  const parseResult = GetAdviceArgs.safeParse(args)
   if (!parseResult.success) {
     const errors = parseResult.error.issues
       .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
@@ -75,7 +70,6 @@ export async function handleConsultLlm(args: unknown) {
     files,
     prompt: userPrompt,
     git_diff,
-    web_mode,
     model: parsedModel,
   } = parseResult.data
 
@@ -91,14 +85,14 @@ export async function handleConsultLlm(args: unknown) {
     ? parsedModel
     : (config.defaultModel ?? parsedModel)
 
-  logToolCall('consult_llm', args)
+  logToolCall('get_advice', args)
 
   const isCliMode = isCliExecution(model)
 
   let prompt: string
   let filePaths: string[] | undefined
 
-  if (web_mode || !isCliMode) {
+  if (!isCliMode) {
     const contextFiles = files ? processFiles(files) : []
 
     const gitDiffOutput = git_diff
@@ -120,31 +114,6 @@ export async function handleConsultLlm(args: unknown) {
 
   await logPrompt(model, prompt)
 
-  if (web_mode) {
-    const systemPrompt = getSystemPrompt(isCliMode)
-    const fullPrompt = `# System Prompt
-
-${systemPrompt}
-
-# User Prompt
-
-${prompt}`
-
-    await copyToClipboard(fullPrompt)
-
-    let responseMessage = '✓ Prompt copied to clipboard!\n\n'
-    responseMessage +=
-      'Please paste it into your browser-based LLM service and share the response here before I proceed with any implementation.'
-
-    if (filePaths && filePaths.length > 0) {
-      responseMessage += `\n\nNote: File paths were included:\n${filePaths.map((p) => `  - ${p}`).join('\n')}`
-    }
-
-    return {
-      content: [{ type: 'text', text: responseMessage }],
-    }
-  }
-
   const { response, costInfo } = await queryLlm(prompt, model, filePaths)
   await logResponse(model, response, costInfo)
 
@@ -154,9 +123,9 @@ ${prompt}`
 }
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === 'consult_llm') {
+  if (request.params.name === 'get_advice') {
     try {
-      return await handleConsultLlm(request.params.arguments)
+      return await handleGetAdvice(request.params.arguments)
     } catch (error) {
       throw new Error(
         `LLM query failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -168,7 +137,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 })
 
 export function initSystemPrompt(homeDirectory: string = homedir()) {
-  const configDir = join(homeDirectory, '.consult-llm-mcp')
+  const configDir = join(homeDirectory, '.grey-so')
   const promptPath = join(configDir, 'SYSTEM_PROMPT.md')
 
   if (existsSync(promptPath)) {

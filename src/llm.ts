@@ -198,21 +198,6 @@ const createExecutorProvider = () => {
     return client
   }
 
-  const getDeepseekClient = (): OpenAI => {
-    if (clientCache.has('deepseek')) return clientCache.get('deepseek')!
-    if (!config.deepseekApiKey) {
-      throw new Error(
-        'DEEPSEEK_API_KEY environment variable is required for DeepSeek models',
-      )
-    }
-    const client = new OpenAI({
-      apiKey: config.deepseekApiKey,
-      baseURL: 'https://api.deepseek.com',
-    })
-    clientCache.set('deepseek', client)
-    return client
-  }
-
   const getGeminiApiClient = (): OpenAI => {
     if (clientCache.has('geminiApi')) return clientCache.get('geminiApi')!
     if (!config.geminiApiKey) {
@@ -246,8 +231,6 @@ const createExecutorProvider = () => {
         config.openaiMode === 'cli'
           ? createCliExecutor(codexCliConfig)
           : createApiExecutor(getOpenAIClient())
-    } else if (model.startsWith('deepseek-')) {
-      executor = createApiExecutor(getDeepseekClient())
     } else if (model.startsWith('gemini-')) {
       executor =
         config.geminiMode === 'cli'
