@@ -57,7 +57,7 @@ You can ask multiple models in parallel and compare:
 > /consult ask gemini, codex, and claude about how to fix the race condition
 ```
 
-The agent will make parallel `get_advice` calls and summarize where the models
+The agent will make parallel `consult` calls and summarize where the models
 agree or differ.
 
 ## Development

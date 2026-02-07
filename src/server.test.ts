@@ -4,7 +4,7 @@ import { tmpdir } from 'os'
 import { join, resolve } from 'path'
 import type { Config } from './config.js'
 import type { ModelAlias } from './config.js'
-import { handleGetAdvice, initSystemPrompt } from './server.js'
+import { handleConsult, initSystemPrompt } from './server.js'
 import { CONFIG_DIR } from './config.js'
 
 const processFilesMock = vi.hoisted(() => vi.fn())
@@ -74,15 +74,15 @@ beforeEach(() => {
   logResponseMock.mockReset()
 })
 
-describe('handleGetAdvice', () => {
+describe('handleConsult', () => {
   it('validates input', async () => {
-    await expect(handleGetAdvice({})).rejects.toThrow(
+    await expect(handleConsult({})).rejects.toThrow(
       'Invalid request parameters',
     )
   })
 
   it('always uses CLI mode (file paths passed to CLI)', async () => {
-    const result = await handleGetAdvice({
+    const result = await handleConsult({
       prompt: 'help me',
       files: ['file1.ts'],
       git_diff: { files: ['src/index.ts'] },
@@ -107,12 +107,12 @@ describe('handleGetAdvice', () => {
   })
 
   it('uses explicit alias even when config default exists', async () => {
-    await handleGetAdvice({ prompt: 'hello', model: 'codex' })
+    await handleConsult({ prompt: 'hello', model: 'codex' })
     expect(queryLlmMock).toHaveBeenCalledWith('hello', 'codex', undefined)
   })
 
   it('builds CLI prompts with file paths and git diff', async () => {
-    await handleGetAdvice({
+    await handleConsult({
       prompt: 'cli prompt',
       model: 'codex',
       files: ['./foo.ts'],
@@ -136,11 +136,11 @@ describe('handleGetAdvice', () => {
 
   it('propagates query errors', async () => {
     queryLlmMock.mockRejectedValueOnce(new Error('boom'))
-    await expect(handleGetAdvice({ prompt: 'oops' })).rejects.toThrow('boom')
+    await expect(handleConsult({ prompt: 'oops' })).rejects.toThrow('boom')
   })
 
-  it('smoke: routes kilo alias through get_advice', async () => {
-    await handleGetAdvice({
+  it('smoke: routes kilo alias through consult', async () => {
+    await handleConsult({
       prompt: 'hello',
       model: 'kilo',
       files: ['./foo.ts'],

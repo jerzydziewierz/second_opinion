@@ -12,7 +12,7 @@ lets an AI coding assistant query other LLMs for a "second opinion".
 | Human-readable name  | Second Opinion MCP             |
 | npm package / binary | `grey-so`                      |
 | MCP server name      | `grey-so`                      |
-| Tool name            | `get_advice`                   |
+| Tool name            | `consult`                      |
 | Config dir           | `~/.config/grey-so/`           |
 | Config file          | `~/.config/grey-so/config.json`|
 | System prompt        | `~/.config/grey-so/SYSTEM_PROMPT.md` |
@@ -35,9 +35,9 @@ lets an AI coding assistant query other LLMs for a "second opinion".
 
 - `src/models.ts` — 4 aliases + default model mapping
 - `src/config.ts` — loads/validates `~/.config/grey-so/config.json` with Zod
-- `src/schema.ts` — tool schema + `GetAdviceArgs` zod object + `resolveModelAlias()`
-- `src/server.ts` — MCP server setup, routes `get_advice` to controller
-- `src/controllers/get-advice.ts` — request handler
+- `src/schema.ts` — tool schema + `ConsultArgs` zod object + `resolveModelAlias()`
+- `src/server.ts` — MCP server setup, routes `consult` to controller
+- `src/controllers/consult.ts` — request handler
 - `src/system-prompt.ts` — default system prompt + custom prompt loading
 - `src/llm.ts` — CLI executor factory (spawn gemini/codex/claude/kilo)
 - `src/llm-query.ts` — orchestrates executor + system prompt

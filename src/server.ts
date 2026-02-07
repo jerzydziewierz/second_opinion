@@ -11,7 +11,7 @@ import { DEFAULT_SYSTEM_PROMPT } from './system-prompt.js'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { handleGetAdvice } from './controllers/get-advice.js'
+import { handleConsult } from './controllers/consult.js'
 import { CONFIG_DIR } from './config.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -38,12 +38,12 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
   }
 })
 
-export { handleGetAdvice } from './controllers/get-advice.js'
+export { handleConsult } from './controllers/consult.js'
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === 'get_advice') {
+  if (request.params.name === 'consult') {
     try {
-      return await handleGetAdvice(request.params.arguments)
+      return await handleConsult(request.params.arguments)
     } catch (error) {
       throw new Error(
         `LLM query failed: ${error instanceof Error ? error.message : String(error)}`,

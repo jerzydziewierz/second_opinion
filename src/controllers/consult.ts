@@ -4,10 +4,10 @@ import { validateContextFiles } from '../file.js'
 import { generateGitDiff } from '../git.js'
 import { queryLlm } from '../llm-query.js'
 import { logPrompt, logResponse, logToolCall } from '../logger.js'
-import { GetAdviceArgs } from '../schema.js'
+import { ConsultArgs } from '../schema.js'
 
-export async function handleGetAdvice(args: unknown) {
-  const parseResult = GetAdviceArgs.safeParse(args)
+export async function handleConsult(args: unknown) {
+  const parseResult = ConsultArgs.safeParse(args)
   if (!parseResult.success) {
     const errors = parseResult.error.issues
       .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
@@ -17,7 +17,7 @@ export async function handleGetAdvice(args: unknown) {
 
   const { files, prompt: userPrompt, git_diff, model: alias } = parseResult.data
 
-  logToolCall('get_advice', args)
+  logToolCall('consult', args)
 
   let gitDiffOutput: string | undefined
   if (git_diff) {

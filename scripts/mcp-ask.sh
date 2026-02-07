@@ -60,7 +60,7 @@ async def main() -> None:
         async with ClientSession(read, write) as session:
             init_result = await session.initialize()
             tool_result = await session.call_tool(
-                "get_advice",
+                "consult",
                 {
                     "model": model,
                     "prompt": prompt,

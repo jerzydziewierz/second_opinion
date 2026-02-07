@@ -31,12 +31,12 @@ claude mcp add --scope user grey-so -- npx -y grey-so
 Test it:
 
 ```
-> testing: use the `get_advice` tool and ask all models - what is the capital of Paris?
+> testing: use the `consult` tool and ask all models - what is the capital of Paris?
 ```
 
 ## How it works
 
-The MCP tool exposes a single `get_advice` tool. The caller picks one of four
+The MCP tool exposes a single `consult` tool. The caller picks one of four
 short aliases — `gemini`, `claude`, `codex`, `kilo` — and the server maps that
 alias to an actual model name via a config file, then shells out to the
 corresponding CLI.
@@ -88,7 +88,7 @@ Edit it to suit your needs.
 
   Let me consult Gemini about the Neovim treesitter API changes:
 
-  grey-so:get_advice (MCP)(prompt: "Neovim plugin broken due to treesitter
+  grey-so:consult (MCP)(prompt: "Neovim plugin broken due to treesitter
                                 API changes...", files: ["lua/testonly.lua"],
                                 model: "gemini")
    The issue is that iter_matches() can return nil nodes in newer Neovim

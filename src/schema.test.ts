@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GetAdviceArgs, MODEL_ALIASES, resolveModelAlias } from './schema.js'
+import { ConsultArgs, MODEL_ALIASES, resolveModelAlias } from './schema.js'
 import { config } from './config.js'
 
 describe('MODEL_ALIASES', () => {
@@ -21,38 +21,38 @@ describe('resolveModelAlias', () => {
   })
 })
 
-describe('GetAdviceArgs', () => {
+describe('ConsultArgs', () => {
   it('requires prompt', () => {
-    const result = GetAdviceArgs.safeParse({})
+    const result = ConsultArgs.safeParse({})
     expect(result.success).toBe(false)
   })
 
   it('accepts valid model aliases', () => {
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'gemini' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'gemini' }).success,
     ).toBe(true)
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'claude' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'claude' }).success,
     ).toBe(true)
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'codex' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'codex' }).success,
     ).toBe(true)
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'kilo' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'kilo' }).success,
     ).toBe(true)
   })
 
   it('rejects invalid model aliases', () => {
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'gpt-4' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'gpt-4' }).success,
     ).toBe(false)
     expect(
-      GetAdviceArgs.safeParse({ prompt: 'hey', model: 'unknown' }).success,
+      ConsultArgs.safeParse({ prompt: 'hey', model: 'unknown' }).success,
     ).toBe(false)
   })
 
   it('enforces non-empty git diff files', () => {
-    const result = GetAdviceArgs.safeParse({
+    const result = ConsultArgs.safeParse({
       prompt: 'hey',
       git_diff: { files: [] },
     })
@@ -63,7 +63,7 @@ describe('GetAdviceArgs', () => {
   })
 
   it('applies default base_ref value', () => {
-    const result = GetAdviceArgs.safeParse({
+    const result = ConsultArgs.safeParse({
       prompt: 'test',
       git_diff: { files: ['a.ts'] },
     })
@@ -74,7 +74,7 @@ describe('GetAdviceArgs', () => {
   })
 
   it('defaults model to config defaultAlias when omitted', () => {
-    const parsed = GetAdviceArgs.parse({ prompt: 'hello world' })
+    const parsed = ConsultArgs.parse({ prompt: 'hello world' })
     expect(parsed.model).toBe(config.defaultAlias)
   })
 })

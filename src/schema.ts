@@ -22,7 +22,7 @@ export function resolveModelAlias(alias: ModelAlias): string {
   return config.models[DEFAULT_ALIAS] as string
 }
 
-export const GetAdviceArgs = z.object({
+export const ConsultArgs = z.object({
   files: z
     .array(z.string())
     .optional()
@@ -65,16 +65,16 @@ export const GetAdviceArgs = z.object({
     ),
 })
 
-const getAdviceInputSchema = z.toJSONSchema(GetAdviceArgs, {
+const consultInputSchema = z.toJSONSchema(ConsultArgs, {
   target: 'openapi-3.0',
 })
 
 export const toolSchema = {
-  name: 'get_advice',
+  name: 'consult',
   description: `Ask a second, different AI for help with the problem at hand. it might have an original idea or approach that you did not think about so far. Provide your question in the prompt field and always include relevant code files as context.
 
 Be specific about what you want: architecture advice, code implementation, document review, bug research, or anything else.
 
 IMPORTANT: Ask neutral, open-ended questions. Avoid suggesting specific solutions or alternatives in your prompt as this can bias the analysis. Instead of "Should I use X or Y approach?", ask "What's the best approach for this problem?" Let the consultant LLM provide unbiased recommendations.`,
-  inputSchema: getAdviceInputSchema,
+  inputSchema: consultInputSchema,
 } as const
