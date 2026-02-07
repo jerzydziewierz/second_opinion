@@ -2,71 +2,11 @@
 
 ## Configuration
 
-### Environment variables
+All configuration lives in `~/.config/grey-so/config.json`. See the
+[README](README.md) for the full schema and defaults.
 
-| Variable                     | Required | Description                                                                                                |
-| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------- |
-| `GEMINI_API_KEY`             | For API  | Google AI API key (Gemini models in API mode)                                                              |
-| `OPENAI_API_KEY`             | For API  | OpenAI API key (Codex models in API mode)                                                                  |
-| `GEMINI_MODE`                | No       | `api` (default) or `cli`                                                                                   |
-| `OPENAI_MODE`                | No       | `api` (default) or `cli`                                                                                   |
-| `CLAUDE_MODE`                | No       | `cli` (default). `api` currently not implemented                                                           |
-| `CODEX_REASONING_EFFORT`     | No       | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`                                                        |
-| `GREY_SO_DEFAULT_MODEL`      | No       | Override default model (`gemini-3-pro-preview`, `gpt-5.3-codex`, `claude-opus-4-6`, or `kilocode-default`) |
-| `GREY_SO_ALLOWED_MODELS`     | No       | Comma-separated subset to advertise in the tool schema                                                     |
-| `GREY_SO_SYSTEM_PROMPT_PATH` | No       | Custom path to system prompt file                                                                          |
-
-If the `model` argument is omitted in `get_advice`, it defaults to
-`gemini-3-pro-preview` unless overridden by `GREY_SO_DEFAULT_MODEL` or narrowed
-by `GREY_SO_ALLOWED_MODELS`.
-
-### Mode compatibility note
-
-This project supports a mix of API-backed and CLI-backed providers, and some
-provider/mode combinations are currently more mature than others.
-
-- Gemini and Codex can run in `api` or `cli` mode.
-- Claude is currently CLI-only in practice (`CLAUDE_MODE=api` is not
-  implemented).
-- Kilocode is currently CLI-only (`kilocode-default` model).
-
-If you switch between subscription/CLI and API-based usage, make sure the
-matching env vars are set (`*_MODE`, API keys, and CLI auth state). Some mixed
-combinations may still be unsupported or less stable as of now.
-
-### CLI mode
-
-Instead of API calls, the server can shell out to locally installed CLI tools.
-This is useful if you already have the CLIs authenticated.
-
-**Gemini CLI:**
-
-```bash
-claude mcp add grey-so -e GEMINI_MODE=cli -- npx -y grey-so
-```
-
-Requires the [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed
-and authenticated (`gemini login`).
-
-**Codex CLI:**
-
-```bash
-claude mcp add grey-so -e OPENAI_MODE=cli -- npx -y grey-so
-```
-
-Requires the Codex CLI installed and authenticated (`codex login`).
-
-**Claude CLI:**
-
-```bash
-claude mcp add grey-so -e CLAUDE_MODE=cli -- npx -y grey-so
-```
-
-Requires Claude Code installed and authenticated.
-
-**Kilocode CLI:**
-
-Use model `kilocode-default` to route through your local Kilocode CLI.
+There are no environment variables to set. The server reads everything from the
+config file and delegates authentication to each CLI tool directly.
 
 ## Customization
 
@@ -78,16 +18,15 @@ The system prompt shapes how the consultant LLM responds. To customize it:
 npx grey-so init-prompt
 ```
 
-This creates `~/.grey-so/SYSTEM_PROMPT.md` with the default prompt. Edit it to
-suit your needs — changes take effect immediately, no restart required.
+This creates `~/.config/grey-so/SYSTEM_PROMPT.md` with the default prompt. Edit
+it to suit your needs — changes take effect immediately, no restart required.
 
-To use a project-specific prompt instead:
+You can also point to a different file via `systemPromptPath` in the config:
 
-```bash
-claude mcp add grey-so \
-  -e GEMINI_API_KEY=your_key \
-  -e GREY_SO_SYSTEM_PROMPT_PATH=./prompts/SYSTEM_PROMPT.md \
-  -- npx -y grey-so
+```json
+{
+  "systemPromptPath": "./prompts/MY_PROMPT.md"
+}
 ```
 
 ## Advanced usage
@@ -108,7 +47,7 @@ the tool — more reliable than relying on natural language inference alone.
 
 Save [examples/SKILL.md](examples/SKILL.md) as
 `~/.claude/skills/grey-so/SKILL.md`. The agent will then automatically trigger
-the tool when you say "ask gemini", "ask codex", or "ask claude".
+the tool when you say "ask gemini", "ask codex", "ask claude", or "ask kilo".
 
 ### Querying multiple models
 

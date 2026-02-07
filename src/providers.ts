@@ -18,7 +18,3 @@ export function resolveProvider(alias: ModelAlias): ProviderId {
   return provider
 }
 
-// All providers now use CLI mode only
-export function isCliMode(): boolean {
-  return true
-}

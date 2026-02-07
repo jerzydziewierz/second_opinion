@@ -187,9 +187,9 @@ describe('CLI executor', () => {
     const args = spawnMock.mock.calls[0]
     expect(args?.[0]).toBe('kilo')
     const cliArgs = args?.[1] as string[]
-    expect(cliArgs[0]).toBe('-m')
-    expect(cliArgs[1]).toBe('openrouter/moonshotai/kimi-k2.5') // Model from mock config
-    expect(cliArgs[2]).toBe('--print')
+    expect(cliArgs[0]).toBe('run')
+    expect(cliArgs[1]).toBe('-m')
+    expect(cliArgs[2]).toBe('openrouter/moonshotai/kimi-k2.5') // Model from mock config
     expect(cliArgs[3]).toContain('system')
 
     const result = await promise

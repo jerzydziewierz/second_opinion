@@ -1,7 +1,6 @@
 import { getExecutorForModel } from './llm.js'
 import { type ModelAlias } from './config.js'
 import { getSystemPrompt } from './system-prompt.js'
-import { isCliMode } from './providers.js'
 
 export async function queryLlm(
   prompt: string,
@@ -13,8 +12,7 @@ export async function queryLlm(
 }> {
   const executor = getExecutorForModel(alias)
 
-  // Get system prompt (with CLI suffix)
-  const systemPrompt = getSystemPrompt(isCliMode())
+  const systemPrompt = getSystemPrompt()
 
   const { response } = await executor.execute(
     prompt,

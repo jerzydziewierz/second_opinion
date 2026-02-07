@@ -30,7 +30,7 @@ const CLI_MODE_SUFFIX = `
 
 IMPORTANT: Do not edit files yourself, only provide recommendations and code examples`
 
-export function getSystemPrompt(isCliMode: boolean): string {
+export function getSystemPrompt(): string {
   const customPromptPath = config.systemPromptPath
   let systemPrompt: string
 
@@ -48,5 +48,5 @@ export function getSystemPrompt(isCliMode: boolean): string {
     systemPrompt = DEFAULT_SYSTEM_PROMPT
   }
 
-  return isCliMode ? systemPrompt + CLI_MODE_SUFFIX : systemPrompt
+  return systemPrompt + CLI_MODE_SUFFIX
 }

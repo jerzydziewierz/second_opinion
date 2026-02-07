@@ -5,13 +5,12 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { config } from './config.js'
-import { toolSchema, type ModelAlias } from './schema.js'
+import { toolSchema } from './schema.js'
 import { logServerStart, logConfiguration } from './logger.js'
 import { DEFAULT_SYSTEM_PROMPT } from './system-prompt.js'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { isCliMode } from './providers.js'
 import { handleGetAdvice } from './controllers/get-advice.js'
 import { CONFIG_DIR } from './config.js'
 
@@ -39,9 +38,6 @@ server.setRequestHandler(ListToolsRequestSchema, () => {
   }
 })
 
-export function isCliExecution(_alias: ModelAlias): boolean {
-  return isCliMode()
-}
 export { handleGetAdvice } from './controllers/get-advice.js'
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {

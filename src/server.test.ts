@@ -4,7 +4,7 @@ import { tmpdir } from 'os'
 import { join, resolve } from 'path'
 import type { Config } from './config.js'
 import type { ModelAlias } from './config.js'
-import { handleGetAdvice, isCliExecution, initSystemPrompt } from './server.js'
+import { handleGetAdvice, initSystemPrompt } from './server.js'
 import { CONFIG_DIR } from './config.js'
 
 const processFilesMock = vi.hoisted(() => vi.fn())
@@ -72,15 +72,6 @@ beforeEach(() => {
   logToolCallMock.mockReset()
   logPromptMock.mockReset()
   logResponseMock.mockReset()
-})
-
-describe('isCliExecution', () => {
-  it('always returns true (CLI mode only)', () => {
-    expect(isCliExecution('gemini')).toBe(true)
-    expect(isCliExecution('claude')).toBe(true)
-    expect(isCliExecution('codex')).toBe(true)
-    expect(isCliExecution('kilo')).toBe(true)
-  })
 })
 
 describe('handleGetAdvice', () => {

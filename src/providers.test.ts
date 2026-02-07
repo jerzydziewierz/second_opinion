@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Config } from './config.js'
 import type { ModelAlias } from './config.js'
-import { isCliMode, resolveProvider } from './providers.js'
+import { resolveProvider } from './providers.js'
 
 const mockConfig = vi.hoisted(
   () =>
@@ -28,11 +28,6 @@ describe('providers', () => {
     expect(resolveProvider('gemini')).toBe('gemini')
     expect(resolveProvider('claude')).toBe('claude')
     expect(resolveProvider('kilo')).toBe('kilocode')
-  })
-
-  it('always returns CLI mode for all providers', () => {
-    // All providers now use CLI mode only
-    expect(isCliMode()).toBe(true)
   })
 
   it('throws for unknown aliases', () => {
