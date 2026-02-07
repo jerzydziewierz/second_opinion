@@ -73,3 +73,31 @@ You can also point to a different file via `systemPromptPath` in the config:
 }
 ```
 
+## Development
+
+after editing the code, run 
+```
+npm run install-global
+```
+
+and then restart your agent of choice.
+
+
+Important: to allow automated testing with gemini, for example, 
+```bash
+gemini -p "testing: use the consult tool and ask all models - what is the capital of Paris?"
+```
+there are two ways: 
+(a) add a `--yolo` flag;
+(b) by specifically allowing the "consult" tool only:
+
+in file `~/.gemini/policies/allow-consult.toml` add
+```toml
+[[rule]]
+toolName = "consult"
+decision = "allow"
+priority = 100
+```
+
+with the second option, one can ommit the --yolo flag.
+
