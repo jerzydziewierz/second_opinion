@@ -1,11 +1,12 @@
 # Second Opinion MCP
 
 An MCP server that lets your AI coding assistant consult a different LLM when it
-needs a fresh perspective. Currently supports Gemini 3 Pro and GPT-5.3 Codex —
-two models, one tool, minimal context overhead.
+needs a fresh perspective. Currently supports Gemini 3 Pro, GPT-5.3 Codex, and
+Claude Opus 4.6 (CLI mode) — three models, one tool, minimal context overhead.
 
-When your agent is stuck or you want a sanity check, just say "ask gemini" or
-"ask codex" and it queries the other model with the relevant files as context.
+When your agent is stuck or you want a sanity check, just say "ask gemini", "ask
+codex", or "ask claude" and it queries the other model with the relevant files
+as context.
 
 # Prerequisities
 
@@ -45,9 +46,11 @@ once configured, test by :
 
 ## Features
 
-- Query Gemini 3 Pro or GPT-5.3 Codex with relevant files as context
+- Query Gemini 3 Pro, GPT-5.3 Codex, or Claude Opus 4.6 with relevant files as
+  context
 - Default model is `gemini-3-pro-preview` when `model` is omitted
-- API mode (direct API calls) or CLI mode (local `gemini`/`codex` CLI tools)
+- API mode (Gemini/Codex) or CLI mode (local `gemini`/`codex`/`claude` CLI
+  tools)
 - Customizable system prompt via `~/.grey-so/SYSTEM_PROMPT.md`
 - Single MCP tool (`get_advice`) — minimal context footprint
 
@@ -57,13 +60,18 @@ Install and authenticate both CLIs first, then register the MCP server in CLI
 mode:
 
 ```bash
-claude mcp add --scope user grey-so -e GEMINI_MODE=cli -e OPENAI_MODE=cli -- npx -y grey-so
+claude mcp add --scope user grey-so -e GEMINI_MODE=cli -e OPENAI_MODE=cli -e CLAUDE_MODE=cli -- npx -y grey-so
 ```
 
-If you prefer API mode for either provider, replace the corresponding
-`_MODE=cli` flag with an API key (e.g. `-e GEMINI_API_KEY=your_key`). Note that
-this will mean that agentic features (e.g. active exploration) will be severely
-limited.
+If you prefer API mode for Gemini/Codex, replace the corresponding `_MODE=cli`
+flag with an API key (e.g. `-e GEMINI_API_KEY=your_key`). Note that this will
+mean that agentic features (e.g. active exploration) will be severely limited.
+
+Claude support is currently CLI-only (`CLAUDE_MODE=cli`). API mode for Claude is
+not implemented yet.
+
+Important: always set `GEMINI_API_KEY` when using Gemini in API mode. If
+`GEMINI_API_KEY` is missing, `codex` will not be able to load `gemini`.
 
 ## Further reading
 

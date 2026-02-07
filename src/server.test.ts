@@ -21,6 +21,7 @@ const mockConfig = vi.hoisted(
     ({
       openaiMode: 'api',
       geminiMode: 'api',
+      claudeMode: 'cli',
       defaultModel: undefined,
     }) as Config,
 )
@@ -63,12 +64,13 @@ beforeEach(() => {
   Object.assign(mockConfig, {
     openaiMode: 'api',
     geminiMode: 'api',
+    claudeMode: 'cli',
     defaultModel: undefined,
   })
 })
 
 describe('isCliExecution', () => {
-  it('detects CLI mode for Gemini and OpenAI models', () => {
+  it('detects CLI mode for Gemini, OpenAI, and Claude models', () => {
     mockConfig.geminiMode = 'cli'
     expect(isCliExecution('gemini-3-pro-preview')).toBe(true)
     mockConfig.geminiMode = 'api'
@@ -79,6 +81,11 @@ describe('isCliExecution', () => {
     expect(isCliExecution('gpt-5.3-codex')).toBe(true)
     mockConfig.openaiMode = 'api'
     expect(isCliExecution('gpt-5.3-codex')).toBe(false)
+
+    mockConfig.claudeMode = 'cli'
+    expect(isCliExecution('claude-opus-4-6')).toBe(true)
+    mockConfig.claudeMode = 'api'
+    expect(isCliExecution('claude-opus-4-6')).toBe(false)
   })
 })
 

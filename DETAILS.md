@@ -4,16 +4,17 @@
 
 ### Environment variables
 
-| Variable                     | Required | Description                                                        |
-| ---------------------------- | -------- | ------------------------------------------------------------------ |
-| `GEMINI_API_KEY`             | For API  | Google AI API key (Gemini models in API mode)                      |
-| `OPENAI_API_KEY`             | For API  | OpenAI API key (Codex models in API mode)                          |
-| `GEMINI_MODE`                | No       | `api` (default) or `cli`                                           |
-| `OPENAI_MODE`                | No       | `api` (default) or `cli`                                           |
-| `CODEX_REASONING_EFFORT`     | No       | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`                |
-| `GREY_SO_DEFAULT_MODEL`      | No       | Override default model (`gemini-3-pro-preview` or `gpt-5.3-codex`) |
-| `GREY_SO_ALLOWED_MODELS`     | No       | Comma-separated subset to advertise in the tool schema             |
-| `GREY_SO_SYSTEM_PROMPT_PATH` | No       | Custom path to system prompt file                                  |
+| Variable                     | Required | Description                                                                            |
+| ---------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| `GEMINI_API_KEY`             | For API  | Google AI API key (Gemini models in API mode)                                          |
+| `OPENAI_API_KEY`             | For API  | OpenAI API key (Codex models in API mode)                                              |
+| `GEMINI_MODE`                | No       | `api` (default) or `cli`                                                               |
+| `OPENAI_MODE`                | No       | `api` (default) or `cli`                                                               |
+| `CLAUDE_MODE`                | No       | `cli` (default). `api` currently not implemented                                       |
+| `CODEX_REASONING_EFFORT`     | No       | `none`, `minimal`, `low`, `medium`, `high`, `xhigh`                                    |
+| `GREY_SO_DEFAULT_MODEL`      | No       | Override default model (`gemini-3-pro-preview`, `gpt-5.3-codex`, or `claude-opus-4-6`) |
+| `GREY_SO_ALLOWED_MODELS`     | No       | Comma-separated subset to advertise in the tool schema                                 |
+| `GREY_SO_SYSTEM_PROMPT_PATH` | No       | Custom path to system prompt file                                                      |
 
 If the `model` argument is omitted in `get_advice`, it defaults to
 `gemini-3-pro-preview` unless overridden by `GREY_SO_DEFAULT_MODEL` or narrowed
@@ -41,6 +42,14 @@ claude mcp add grey-so -e OPENAI_MODE=cli -- npx -y grey-so
 ```
 
 Requires the Codex CLI installed and authenticated (`codex login`).
+
+**Claude CLI:**
+
+```bash
+claude mcp add grey-so -e CLAUDE_MODE=cli -- npx -y grey-so
+```
+
+Requires Claude Code installed and authenticated.
 
 ## Customization
 
@@ -82,18 +91,18 @@ the tool — more reliable than relying on natural language inference alone.
 
 Save [examples/SKILL.md](examples/SKILL.md) as
 `~/.claude/skills/grey-so/SKILL.md`. The agent will then automatically trigger
-the tool when you say "ask gemini" or "ask codex".
+the tool when you say "ask gemini", "ask codex", or "ask claude".
 
-### Querying both models
+### Querying multiple models
 
-You can ask both models in parallel and compare:
+You can ask multiple models in parallel and compare:
 
 ```
-> /consult ask both gemini and codex about how to fix the race condition
+> /consult ask gemini, codex, and claude about how to fix the race condition
 ```
 
-The agent will make two `get_advice` calls simultaneously and summarize where
-the models agree or differ.
+The agent will make parallel `get_advice` calls and summarize where the models
+agree or differ.
 
 ## Development
 

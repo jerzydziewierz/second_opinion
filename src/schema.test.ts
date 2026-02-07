@@ -7,13 +7,15 @@ describe('SupportedChatModel', () => {
       true,
     )
     expect(SupportedChatModel.safeParse('gpt-5.3-codex').success).toBe(true)
+    expect(SupportedChatModel.safeParse('claude-opus-4-6').success).toBe(true)
     expect(SupportedChatModel.safeParse('gpt-3.5').success).toBe(false)
   })
 
   it('ALL_MODELS contains all available models', () => {
     expect(ALL_MODELS).toContain('gemini-3-pro-preview')
     expect(ALL_MODELS).toContain('gpt-5.3-codex')
-    expect(ALL_MODELS).toHaveLength(2)
+    expect(ALL_MODELS).toContain('claude-opus-4-6')
+    expect(ALL_MODELS).toHaveLength(3)
   })
 })
 

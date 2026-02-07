@@ -54,6 +54,9 @@ export function isCliExecution(model: SupportedChatModel): boolean {
   if (model.startsWith('gpt-') && config.openaiMode === 'cli') {
     return true
   }
+  if (model.startsWith('claude-') && config.claudeMode === 'cli') {
+    return true
+  }
   return false
 }
 

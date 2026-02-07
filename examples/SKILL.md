@@ -1,6 +1,7 @@
 ---
 name: grey-so
-description: Use it when the user asks to "ask gemini" or "ask codex"
+description:
+  Use it when the user asks to "ask gemini", "ask codex", or "ask claude"
 allowed-tools: Read, Glob, Grep, mcp__grey-so__get_advice
 ---
 
@@ -16,10 +17,11 @@ When consulting with external LLMs:
 
 - **Codex**: Use if user says "ask codex" → use model "gpt-5.3-codex"
 - **Gemini**: Default for "ask gemini" → use model "gemini-3-pro-preview"
+- **Claude**: Use if user says "ask claude" → use model "claude-opus-4-6"
 
 **3. Call the MCP Tool**: Use `mcp__grey-so__get_advice` with:
 
-- `model`: "gemini-3-pro-preview" or "gpt-5.3-codex"
+- `model`: "gemini-3-pro-preview", "gpt-5.3-codex", or "claude-opus-4-6"
 - `prompt`: Clear, neutral question without suggesting solutions
 - `files`: Array of relevant file paths
 

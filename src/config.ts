@@ -31,6 +31,7 @@ const Config = z.object({
   defaultModel: SupportedChatModel.optional(),
   geminiMode: z.enum(['api', 'cli']).default('api'),
   openaiMode: z.enum(['api', 'cli']).default('api'),
+  claudeMode: z.enum(['api', 'cli']).default('cli'),
   codexReasoningEffort: z
     .enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'])
     .optional(),
@@ -49,6 +50,7 @@ const parsedConfig = Config.safeParse({
   defaultModel: process.env.GREY_SO_DEFAULT_MODEL,
   geminiMode: process.env.GEMINI_MODE,
   openaiMode: process.env.OPENAI_MODE,
+  claudeMode: process.env.CLAUDE_MODE,
   codexReasoningEffort: process.env.CODEX_REASONING_EFFORT,
   systemPromptPath: process.env.GREY_SO_SYSTEM_PROMPT_PATH,
 })

@@ -15,6 +15,7 @@ const mockConfig = vi.hoisted(
       geminiApiKey: 'gemini',
       openaiMode: 'api',
       geminiMode: 'api',
+      claudeMode: 'cli',
       defaultModel: undefined,
       codexReasoningEffort: undefined,
     }) as Config,
@@ -76,6 +77,7 @@ beforeEach(() => {
     geminiApiKey: 'gemini',
     openaiMode: 'api',
     geminiMode: 'api',
+    claudeMode: 'cli',
     defaultModel: undefined,
   })
 })
@@ -210,6 +212,57 @@ describe('CLI executor', () => {
     await expect(promise).rejects.toThrow('Gemini quota exceeded')
   })
 
+  it('spawns claude CLI with print mode and model', async () => {
+    mockConfig.claudeMode = 'cli'
+    const child = createChildProcess()
+    setupSpawn(child)
+
+    const executor = getExecutorForModel('claude-opus-4-6')
+    const promise = executor.execute('user', 'claude-opus-4-6', 'system')
+
+    resolveCliExecution(child, { stdout: 'result', code: 0 })
+
+    const args = spawnMock.mock.calls[0]
+    expect(args?.[0]).toBe('claude')
+    const cliArgs = args?.[1] as string[]
+    expect(cliArgs[0]).toBe('--print')
+    expect(cliArgs[1]).toBe('--model')
+    expect(cliArgs[2]).toBe('claude-opus-4-6')
+    expect(cliArgs[3]).toContain('system')
+    expect(cliArgs[3]).toContain('user')
+
+    const result = await promise
+    expect(result.response).toBe('result')
+    expect(result.usage).toBeNull()
+  })
+
+  it('strips ANTHROPIC_API_KEY when spawning claude CLI', async () => {
+    mockConfig.claudeMode = 'cli'
+    const child = createChildProcess()
+    setupSpawn(child)
+
+    const previousApiKey = process.env.ANTHROPIC_API_KEY
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+
+    try {
+      const executor = getExecutorForModel('claude-opus-4-6')
+      const promise = executor.execute('user', 'claude-opus-4-6', 'system')
+      resolveCliExecution(child, { stdout: 'ok', code: 0 })
+      await promise
+
+      const spawnOptions = spawnMock.mock.calls[0]?.[2] as
+        | { env?: NodeJS.ProcessEnv }
+        | undefined
+      expect(spawnOptions?.env?.ANTHROPIC_API_KEY).toBeUndefined()
+    } finally {
+      if (previousApiKey === undefined) {
+        delete process.env.ANTHROPIC_API_KEY
+      } else {
+        process.env.ANTHROPIC_API_KEY = previousApiKey
+      }
+    }
+  })
+
   it('handles spawn error events with friendly message', async () => {
     mockConfig.openaiMode = 'cli'
     const child = createChildProcess()
@@ -241,6 +294,13 @@ describe('CLI executor', () => {
 })
 
 describe('executor selection', () => {
+  it('throws for claude API mode until implemented', () => {
+    mockConfig.claudeMode = 'api'
+    expect(() => getExecutorForModel('claude-opus-4-6')).toThrow(
+      'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
+    )
+  })
+
   it('throws on unknown models', () => {
     expect(() =>
       getExecutorForModel('mystery-model' as unknown as SupportedChatModel),

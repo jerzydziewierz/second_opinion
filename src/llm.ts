@@ -64,11 +64,19 @@ function buildCliEnv(model: SupportedChatModelType): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env }
 
   // Ensure provider CLIs receive API keys if this server was configured with them.
-  if (model.startsWith('gemini-') && config.geminiApiKey && !env.GEMINI_API_KEY) {
+  if (
+    model.startsWith('gemini-') &&
+    config.geminiApiKey &&
+    !env.GEMINI_API_KEY
+  ) {
     env.GEMINI_API_KEY = config.geminiApiKey
   }
   if (model.startsWith('gpt-') && config.openaiApiKey && !env.OPENAI_API_KEY) {
     env.OPENAI_API_KEY = config.openaiApiKey
+  }
+  if (model.startsWith('claude-')) {
+    // Force Claude CLI to use local subscription auth instead of API key auth.
+    delete env.ANTHROPIC_API_KEY
   }
 
   return env
@@ -200,6 +208,13 @@ const codexCliConfig: CliConfig = {
     new Error(`Codex CLI exited with code ${code}. Error: ${stderr.trim()}`),
 }
 
+const claudeCliConfig: CliConfig = {
+  cliName: 'claude',
+  buildArgs: (model, fullPrompt) => ['--print', '--model', model, fullPrompt],
+  handleNonZeroExit: (code, stderr) =>
+    new Error(`Claude CLI exited with code ${code}. Error: ${stderr.trim()}`),
+}
+
 const createExecutorProvider = () => {
   const executorCache = new Map<string, LlmExecutor>()
   const clientCache = new Map<string, OpenAI>()
@@ -236,7 +251,8 @@ const createExecutorProvider = () => {
     const cacheKey =
       model +
       (model.startsWith('gpt-') ? `-${config.openaiMode}` : '') +
-      (model.startsWith('gemini-') ? `-${config.geminiMode}` : '')
+      (model.startsWith('gemini-') ? `-${config.geminiMode}` : '') +
+      (model.startsWith('claude-') ? `-${config.claudeMode}` : '')
 
     if (executorCache.has(cacheKey)) {
       return executorCache.get(cacheKey)!
@@ -254,6 +270,14 @@ const createExecutorProvider = () => {
         config.geminiMode === 'cli'
           ? createCliExecutor(geminiCliConfig)
           : createApiExecutor(getGeminiApiClient())
+    } else if (model.startsWith('claude-')) {
+      if (config.claudeMode === 'cli') {
+        executor = createCliExecutor(claudeCliConfig)
+      } else {
+        throw new Error(
+          'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
+        )
+      }
     } else {
       throw new Error(`Unable to determine LLM provider for model: ${model}`)
     }
