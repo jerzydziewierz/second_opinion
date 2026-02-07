@@ -1,82 +1,44 @@
 # TODO
 
-## Architectural Decoupling Plan (Subagent-Ready)
+## Architectural Decoupling (Lean Plan)
 
-Goal: make agent/provider/model wiring extensible so adding `opencode` and
-`kilocode` later is mostly configuration, not cross-file edits.
+Goal: remove scattered provider/model logic and make new subagents (`opencode`,
+`kilocode`) a small, local change.
 
-### Phase 0: Baseline and constraints
+### MVP (do now)
 
-- [ ] Inventory current coupling points in `src/llm.ts`, `src/llm-query.ts`,
-      and `src/server.ts` (model prefix checks, provider selection, CLI/API
-      mode branching).
-- [ ] Define non-goals for first refactor (do not change external MCP tool
-      contract or existing model defaults yet).
-- [ ] Add architecture note (`docs/architecture/subagents.md`) with current
-      flow and target flow.
-
-### Phase 1: Provider/agent registry extraction
-
-- [ ] Introduce a typed `ProviderRegistry` that resolves:
-      provider id -> capabilities, auth strategy, model normalization rules,
-      invoke adapter.
-- [ ] Replace scattered string-prefix logic with `resolveProvider(modelOrId)`.
-- [ ] Add `AgentRegistry` abstraction for subagents:
-      agent id -> prompt template policy, supported providers/models, execution
-      mode constraints.
-- [ ] Move all provider/agent metadata into one config module
-      (`src/registry/providers.ts`, `src/registry/agents.ts`).
-
-### Phase 2: Execution pipeline decoupling
-
-- [ ] Split orchestration into explicit stages:
-      request normalize -> agent resolve -> provider resolve -> context build ->
-      invoke -> response map.
-- [ ] Extract `handleGetAdvice` from `src/server.ts` into
+- [x] Create `src/providers.ts` with a typed `ProviderConfig` and
+      `resolveProvider(model)`.
+- [x] Move provider matching rules into that module (single source of truth;
+      no `startsWith(...)` checks outside resolver).
+- [x] Replace provider/model detection in:
+      `src/llm.ts`, `src/llm-query.ts`, `src/server.ts`.
+- [x] Extract `handleGetAdvice` from `src/server.ts` into
       `src/controllers/get-advice.ts`.
-- [ ] Introduce `ExecutionContext` object passed through stages instead of
-      global/shared branching.
-- [ ] Add timeout/fallback policy hook in pipeline (initially no-op default,
-      pluggable later).
+- [x] Add a context security gate before prompt/context build
+      (sensitive-file denylist, binary skip, size cap).
 
-### Phase 3: Contract hardening
+### Subagent onboarding path
 
-- [ ] Define TypeScript interfaces for:
-      `ProviderAdapter`, `AgentAdapter`, `ModelResolver`, `ContextFilter`.
-- [ ] Add schema validation for registry entries (zod or equivalent) at startup.
-- [ ] Add error taxonomy with stable codes
-      (`PROVIDER_NOT_FOUND`, `MODEL_UNSUPPORTED`, `AUTH_MISSING`, etc.).
-- [ ] Keep existing CLI/API behavior but route both through the same pipeline.
+- [x] Add `opencode` as a provider config + invoke function.
+- [x] Add `kilocode` as a provider config + invoke function.
+- [x] Add smoke tests for `get_advice` path for each provider.
 
-### Phase 4: Subagent onboarding path (`opencode`, `kilocode`)
+### Deferred (only if/when needed)
 
-- [ ] Add stub entries for `opencode` and `kilocode` in `AgentRegistry`
-      behind feature flags.
-- [ ] Define per-agent system prompt and context policy boundaries.
-- [ ] Add compatibility matrix:
-      subagent x provider x model family x execution mode.
-- [ ] Add smoke tests for each agent through the same `get_advice` entrypoint.
+- [ ] Timeout/fallback policy and retry strategy.
+- [ ] Full CLI/API behavior unification.
+- [ ] Compatibility matrix docs.
+- [ ] Runtime schema validation for static provider config.
+- [ ] Expanded error taxonomy with stable external error codes.
 
-### Phase 5: Testing and rollout
+### Definition of done (MVP)
 
-- [ ] Add unit tests for resolver and registry behavior (no string-prefix logic
-      outside resolver).
-- [ ] Add integration tests for equivalent behavior pre/post refactor for
-      Gemini/Codex/Claude.
-- [ ] Add snapshot/contract tests for MCP `get_advice` response shape.
-- [ ] Land in small PRs:
-      1) registry extraction, 2) pipeline extraction, 3) adapter migration,
-      4) agent onboarding stubs.
-
-### Definition of done
-
-- [ ] Adding a new subagent requires changes in registry/config only (no edits
-      to core server orchestration).
-- [ ] Adding a new model family requires resolver config change, not ad-hoc
-      string matching across files.
-- [ ] CLI and API modes produce equivalent provider-selection behavior.
-- [ ] `opencode` and `kilocode` can be introduced as config + adapter stubs with
-      passing smoke tests.
+- [ ] Adding a provider/subagent is usually one config entry + one invoke
+      implementation.
+- [x] No provider/model prefix matching is duplicated across files.
+- [x] Existing Gemini/Codex/Claude behavior remains intact after refactor.
+- [x] Sensitive files are blocked from context by default.
 
 ## Critical
 
@@ -84,19 +46,6 @@ Goal: make agent/provider/model wiring extensible so adding `opencode` and
 
 ## Medium
 
-- [ ] Architectural coupling — model detection logic (string prefix checks like
-      `gemini-`, `gpt-`) scattered across `src/llm.ts`, `src/llm-query.ts`,
-      `src/server.ts`. Refactor into a provider interface/registry.
-- [ ] Data exposure boundary — no redaction/exclusion controls for files sent as
-      context. Consider filtering sensitive files (.env, credentials, etc.).
-- [ ] Dual execution modes (API vs CLI) can produce different behavior, auth
-      flows, and observability. Document or unify expectations.
-- [ ] No fallback/timeout policy when selected model is unavailable.
-
-## Low
-
-- [ ] God object — `server.ts` mixes CLI argument parsing, MCP setup, and
-      request handling. Extract `handleGetAdvice` to a separate controller.
 - [ ] `process.cwd()` default for repo path unreliable when MCP server runs from
       a different directory. Consider requiring absolute path from agent.
 - [ ] Naming inconsistency — project titled "Second Opinion MCP" but install
@@ -105,3 +54,9 @@ Goal: make agent/provider/model wiring extensible so adding `opencode` and
 - [ ] Prompt governance — mutable global system prompt
       (`~/.grey-so/SYSTEM_PROMPT.md`) makes behavior non-reproducible across
       environments.
+
+## Low
+
+- [ ] Dual execution modes (API vs CLI) can produce different behavior, auth
+      flows, and observability. Document or unify expectations.
+- [ ] No fallback/timeout policy when selected model is unavailable.

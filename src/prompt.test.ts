@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { writeFileSync, mkdirSync, rmSync, readFileSync, chmodSync } from 'fs'
 import { join, relative } from 'path'
 import { tmpdir } from 'os'
-import { processFiles } from './file.js'
+import { MAX_CONTEXT_FILE_BYTES, processFiles } from './file.js'
 import { buildPrompt } from './prompt-builder.js'
 
 describe('processFiles', () => {
@@ -74,6 +74,26 @@ describe('processFiles', () => {
     } finally {
       chmodSync(testFile1, 0o600)
     }
+  })
+
+  it('blocks sensitive files from context by default', () => {
+    const sensitiveFile = join(testDir, '.env')
+    writeFileSync(sensitiveFile, 'SECRET=123')
+    expect(() => processFiles([sensitiveFile])).toThrow('Blocked sensitive file')
+  })
+
+  it('blocks binary files from context', () => {
+    const binaryFile = join(testDir, 'blob.bin')
+    writeFileSync(binaryFile, Buffer.from([0, 1, 2, 3]))
+    expect(() => processFiles([binaryFile])).toThrow(
+      'Binary file is not allowed in context',
+    )
+  })
+
+  it('blocks files larger than max context size', () => {
+    const largeFile = join(testDir, 'large.txt')
+    writeFileSync(largeFile, 'a'.repeat(MAX_CONTEXT_FILE_BYTES + 1))
+    expect(() => processFiles([largeFile])).toThrow('File exceeds max context size')
   })
 })
 

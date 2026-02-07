@@ -21,7 +21,7 @@ export const GetAdviceArgs = z.object({
   model: SupportedChatModel.optional()
     .default(fallbackModel)
     .describe(
-      'LLM model to use. Use one of "gpt-5.3-codex",  "gemini-3-pro-preview", "claude-opus-4-6" as per user\'s preference',
+      'LLM model to use. Use one of "gpt-5.3-codex", "gemini-3-pro-preview", "claude-opus-4-6", "opencode-default", or "kilocode-default" as per user preference.',
     ),
   git_diff: z
     .object({

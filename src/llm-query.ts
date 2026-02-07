@@ -1,8 +1,8 @@
 import { getExecutorForModel } from './llm.js'
 import { type SupportedChatModel } from './schema.js'
 import { calculateCost } from './llm-cost.js'
-import { config } from './config.js'
 import { getSystemPrompt } from './system-prompt.js'
+import { isCliMode } from './providers.js'
 
 export async function queryLlm(
   prompt: string,
@@ -15,11 +15,7 @@ export async function queryLlm(
   const executor = getExecutorForModel(model)
 
   // Get system prompt (with CLI suffix if needed)
-  const isCliMode =
-    (model.startsWith('gemini-') && config.geminiMode === 'cli') ||
-    (model.startsWith('gpt-') && config.openaiMode === 'cli') ||
-    (model.startsWith('claude-') && config.claudeMode === 'cli')
-  const systemPrompt = getSystemPrompt(isCliMode)
+  const systemPrompt = getSystemPrompt(isCliMode(model))
 
   const { response, usage } = await executor.execute(
     prompt,

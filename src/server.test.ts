@@ -7,6 +7,7 @@ import type { SupportedChatModel } from './schema.js'
 import { handleGetAdvice, isCliExecution, initSystemPrompt } from './server.js'
 
 const processFilesMock = vi.hoisted(() => vi.fn())
+const validateContextFilesMock = vi.hoisted(() => vi.fn())
 const generateGitDiffMock = vi.hoisted(() => vi.fn())
 const buildPromptMock = vi.hoisted(() => vi.fn())
 const queryLlmMock = vi.hoisted(() => vi.fn())
@@ -33,7 +34,10 @@ vi.mock('./config.js', async (importOriginal) => {
     config: mockConfig,
   }
 })
-vi.mock('./file.js', () => ({ processFiles: processFilesMock }))
+vi.mock('./file.js', () => ({
+  processFiles: processFilesMock,
+  validateContextFiles: validateContextFilesMock,
+}))
 vi.mock('./git.js', () => ({ generateGitDiff: generateGitDiffMock }))
 vi.mock('./prompt-builder.js', () => ({ buildPrompt: buildPromptMock }))
 vi.mock('./llm-query.js', () => ({ queryLlm: queryLlmMock }))
@@ -50,6 +54,7 @@ vi.mock('./logger.js', () => ({
 
 beforeEach(() => {
   processFilesMock.mockReset().mockReturnValue([{ path: 'a.ts', content: '' }])
+  validateContextFilesMock.mockReset()
   generateGitDiffMock
     .mockReset()
     .mockReturnValue({ ok: true, diff: 'diff output' })
@@ -86,6 +91,9 @@ describe('isCliExecution', () => {
     expect(isCliExecution('claude-opus-4-6')).toBe(true)
     mockConfig.claudeMode = 'api'
     expect(isCliExecution('claude-opus-4-6')).toBe(false)
+
+    expect(isCliExecution('opencode-default')).toBe(true)
+    expect(isCliExecution('kilocode-default')).toBe(true)
   })
 })
 
@@ -105,6 +113,7 @@ describe('handleGetAdvice', () => {
     })
 
     expect(processFilesMock).toHaveBeenCalledWith(['file1.ts'])
+    expect(validateContextFilesMock).toHaveBeenCalledWith(['file1.ts'])
     expect(generateGitDiffMock).toHaveBeenCalledWith(
       undefined,
       ['src/index.ts'],
@@ -143,6 +152,7 @@ describe('handleGetAdvice', () => {
     })
 
     expect(processFilesMock).not.toHaveBeenCalled()
+    expect(validateContextFilesMock).toHaveBeenCalledWith(['./foo.ts'])
     expect(buildPromptMock).not.toHaveBeenCalled()
     const [prompt, model, filePaths] = queryLlmMock.mock.calls[0] as [
       string,
@@ -164,6 +174,32 @@ describe('handleGetAdvice', () => {
   it('propagates query errors', async () => {
     queryLlmMock.mockRejectedValueOnce(new Error('boom'))
     await expect(handleGetAdvice({ prompt: 'oops' })).rejects.toThrow('boom')
+  })
+
+  it('smoke: routes opencode model through get_advice', async () => {
+    await handleGetAdvice({
+      prompt: 'hello',
+      model: 'opencode-default',
+      files: ['./foo.ts'],
+    })
+    expect(queryLlmMock).toHaveBeenCalledWith(
+      'hello',
+      'opencode-default',
+      [resolve('./foo.ts')],
+    )
+  })
+
+  it('smoke: routes kilocode model through get_advice', async () => {
+    await handleGetAdvice({
+      prompt: 'hello',
+      model: 'kilocode-default',
+      files: ['./foo.ts'],
+    })
+    expect(queryLlmMock).toHaveBeenCalledWith(
+      'hello',
+      'kilocode-default',
+      [resolve('./foo.ts')],
+    )
   })
 })
 

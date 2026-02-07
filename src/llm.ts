@@ -4,6 +4,7 @@ import { relative } from 'path'
 import { config } from './config.js'
 import { type SupportedChatModel as SupportedChatModelType } from './schema.js'
 import { logCliDebug } from './logger.js'
+import { resolveExecutionMode, resolveProvider } from './providers.js'
 
 export interface LlmExecutor {
   execute(
@@ -62,19 +63,16 @@ type CliConfig = {
 
 function buildCliEnv(model: SupportedChatModelType): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env }
+  const provider = resolveProvider(model)
 
   // Ensure provider CLIs receive API keys if this server was configured with them.
-  if (
-    model.startsWith('gemini-') &&
-    config.geminiApiKey &&
-    !env.GEMINI_API_KEY
-  ) {
+  if (provider === 'gemini' && config.geminiApiKey && !env.GEMINI_API_KEY) {
     env.GEMINI_API_KEY = config.geminiApiKey
   }
-  if (model.startsWith('gpt-') && config.openaiApiKey && !env.OPENAI_API_KEY) {
+  if (provider === 'openai' && config.openaiApiKey && !env.OPENAI_API_KEY) {
     env.OPENAI_API_KEY = config.openaiApiKey
   }
-  if (model.startsWith('claude-')) {
+  if (provider === 'claude') {
     // Force Claude CLI to use local subscription auth instead of API key auth.
     delete env.ANTHROPIC_API_KEY
   }
@@ -215,6 +213,20 @@ const claudeCliConfig: CliConfig = {
     new Error(`Claude CLI exited with code ${code}. Error: ${stderr.trim()}`),
 }
 
+const opencodeCliConfig: CliConfig = {
+  cliName: 'opencode',
+  buildArgs: (_model, fullPrompt) => ['run', '--print', fullPrompt],
+  handleNonZeroExit: (code, stderr) =>
+    new Error(`Opencode CLI exited with code ${code}. Error: ${stderr.trim()}`),
+}
+
+const kilocodeCliConfig: CliConfig = {
+  cliName: 'kilocode',
+  buildArgs: (_model, fullPrompt) => ['run', '--print', fullPrompt],
+  handleNonZeroExit: (code, stderr) =>
+    new Error(`Kilocode CLI exited with code ${code}. Error: ${stderr.trim()}`),
+}
+
 const createExecutorProvider = () => {
   const executorCache = new Map<string, LlmExecutor>()
   const clientCache = new Map<string, OpenAI>()
@@ -247,12 +259,9 @@ const createExecutorProvider = () => {
   }
 
   return (model: SupportedChatModelType): LlmExecutor => {
-    // Create cache key that includes mode for models that support CLI
-    const cacheKey =
-      model +
-      (model.startsWith('gpt-') ? `-${config.openaiMode}` : '') +
-      (model.startsWith('gemini-') ? `-${config.geminiMode}` : '') +
-      (model.startsWith('claude-') ? `-${config.claudeMode}` : '')
+    const provider = resolveProvider(model)
+    const executionMode = resolveExecutionMode(model)
+    const cacheKey = `${provider}-${model}-${executionMode}`
 
     if (executorCache.has(cacheKey)) {
       return executorCache.get(cacheKey)!
@@ -260,24 +269,28 @@ const createExecutorProvider = () => {
 
     let executor: LlmExecutor
 
-    if (model.startsWith('gpt-')) {
+    if (provider === 'openai') {
       executor =
-        config.openaiMode === 'cli'
+        executionMode === 'cli'
           ? createCliExecutor(codexCliConfig)
           : createApiExecutor(getOpenAIClient())
-    } else if (model.startsWith('gemini-')) {
+    } else if (provider === 'gemini') {
       executor =
-        config.geminiMode === 'cli'
+        executionMode === 'cli'
           ? createCliExecutor(geminiCliConfig)
           : createApiExecutor(getGeminiApiClient())
-    } else if (model.startsWith('claude-')) {
-      if (config.claudeMode === 'cli') {
+    } else if (provider === 'claude') {
+      if (executionMode === 'cli') {
         executor = createCliExecutor(claudeCliConfig)
       } else {
         throw new Error(
           'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
         )
       }
+    } else if (provider === 'opencode') {
+      executor = createCliExecutor(opencodeCliConfig)
+    } else if (provider === 'kilocode') {
+      executor = createCliExecutor(kilocodeCliConfig)
     } else {
       throw new Error(`Unable to determine LLM provider for model: ${model}`)
     }

@@ -236,6 +236,50 @@ describe('CLI executor', () => {
     expect(result.usage).toBeNull()
   })
 
+  it('spawns opencode CLI in print mode', async () => {
+    const child = createChildProcess()
+    setupSpawn(child)
+
+    const executor = getExecutorForModel('opencode-default')
+    const promise = executor.execute('user', 'opencode-default', 'system')
+
+    resolveCliExecution(child, { stdout: 'result', code: 0 })
+
+    const args = spawnMock.mock.calls[0]
+    expect(args?.[0]).toBe('opencode')
+    expect(args?.[1]).toEqual([
+      'run',
+      '--print',
+      expect.stringContaining('system'),
+    ])
+
+    const result = await promise
+    expect(result.response).toBe('result')
+    expect(result.usage).toBeNull()
+  })
+
+  it('spawns kilocode CLI in print mode', async () => {
+    const child = createChildProcess()
+    setupSpawn(child)
+
+    const executor = getExecutorForModel('kilocode-default')
+    const promise = executor.execute('user', 'kilocode-default', 'system')
+
+    resolveCliExecution(child, { stdout: 'result', code: 0 })
+
+    const args = spawnMock.mock.calls[0]
+    expect(args?.[0]).toBe('kilocode')
+    expect(args?.[1]).toEqual([
+      'run',
+      '--print',
+      expect.stringContaining('system'),
+    ])
+
+    const result = await promise
+    expect(result.response).toBe('result')
+    expect(result.usage).toBeNull()
+  })
+
   it('strips ANTHROPIC_API_KEY when spawning claude CLI', async () => {
     mockConfig.claudeMode = 'cli'
     const child = createChildProcess()
