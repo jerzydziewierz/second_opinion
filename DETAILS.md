@@ -113,3 +113,12 @@ claude mcp add grey-so -- npm run dev
 
 This runs TypeScript source directly with `tsx`. After changes, restart the
 agent to pick up the new version. To unlink: `npm unlink -g`.
+
+To catch stale compiled output before publishing or sharing, run:
+
+```bash
+npm run check:dist-fresh
+```
+
+This fails if any `src/*.ts` file is newer than its corresponding `dist/*.js`
+file or if required dist files are missing.
