@@ -7,11 +7,22 @@ two models, one tool, minimal context overhead.
 When your agent is stuck or you want a sanity check, just say "ask gemini" or
 "ask codex" and it queries the other model with the relevant files as context.
 
+# Prerequisities
+
+It is assumed that you will be using claude-code as the primary driver, although reverse usage is likely possible too;
+
+It is most recommended that you use the "cli method" as it gives the subagents capabilities to explore the repo as needed. 
+
+install Google/gemini from <CLAUDE: find correct link> and OpenAI/codex from <CLAUDE: find correct link>; configure both them and make sure they can use your preferred billing method (subscription or API); note that as of 2026-02, subscription is approx. 20x cheaper than API;
+
+once configured, test by :
+
+"testing: ask both gemini and GPT, what is the capital of Paris?"
+
 ## Example
 
 ```
-> Still getting this error after your fix. Ask gemini
-  E5108: Error executing lua: attempt to call method 'child' (a nil value)
+> Still getting this error after your fix. Ask gemini.
 
 ⏺ Let me consult Gemini about the Neovim treesitter API changes:
 
