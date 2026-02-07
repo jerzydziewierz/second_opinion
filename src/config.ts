@@ -14,9 +14,9 @@ const enabledModels =
     : [...ALL_MODELS]
 
 if (enabledModels.length === 0) {
-  console.error('❌ Invalid environment variables:')
-  console.error('  GREY_SO_ALLOWED_MODELS: No valid models enabled.')
-  process.exit(1)
+  throw new Error(
+    'Invalid environment variables: GREY_SO_ALLOWED_MODELS - No valid models enabled.',
+  )
 }
 
 // Dynamic Zod enum based on enabled models
@@ -56,11 +56,10 @@ const parsedConfig = Config.safeParse({
 })
 
 if (!parsedConfig.success) {
-  console.error('❌ Invalid environment variables:')
-  for (const issue of parsedConfig.error.issues) {
-    console.error(`  ${issue.path.join('.')}: ${issue.message}`)
-  }
-  process.exit(1)
+  const errors = parsedConfig.error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join('\n  ')
+  throw new Error(`Invalid environment variables:\n  ${errors}`)
 }
 
 export const config: Config = {

@@ -21,8 +21,8 @@ export interface LlmExecutor {
 /**
  * Creates an executor that interacts with an OpenAI-compatible API.
  *
- * Don't let it confuse you that client is of type OpenAI. We used OpenAI API
- * client for Gemini also.
+ * Note: The OpenAI client is used for both OpenAI and Gemini APIs,
+ * as Gemini provides an OpenAI-compatible endpoint.
  */
 function createApiExecutor(client: OpenAI): LlmExecutor {
   return {
