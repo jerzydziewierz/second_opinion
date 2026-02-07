@@ -51,8 +51,7 @@ once configured, test by :
 - Query Gemini 3 Pro, GPT-5.3 Codex, or Claude Opus 4.6 with relevant files as
   context
 - Default model is `gemini-3-pro-preview` when `model` is omitted
-- API mode (Gemini/Codex) or CLI mode (local `gemini`/`codex`/`claude` CLI
-  tools)
+- API mode (`Gemini`/`Codex`) or, preferably, CLI mode (local `gemini`/`codex`/`claude` CLI tools)
 - Customizable system prompt via `~/.grey-so/SYSTEM_PROMPT.md`
 - Single MCP tool (`get_advice`) — minimal context footprint
 

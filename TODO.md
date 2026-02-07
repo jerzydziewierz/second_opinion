@@ -1,28 +1,82 @@
 # TODO
 
-## Claude Opus 4.6 Integration Plan
+## Architectural Decoupling Plan (Subagent-Ready)
 
-- [x] Phase 1 (now): CLI-only Claude support; do not add Anthropic SDK/API
-      dependency yet.
-- [x] Add Claude Opus 4.6 model entry (`claude-opus-4-6`) to `src/models.ts`.
-- [x] Add `CLAUDE_MODE` configuration in `src/config.ts` (default `cli`; `api`
-      intentionally unsupported for now).
-- [x] Update request schema/help text in `src/schema.ts` so `model` descriptions
-      include Claude selection guidance.
-- [x] Implement Claude CLI executor path in `src/llm.ts` using
-      `claude --print --model <model> <prompt>`.
-- [x] Keep Claude API mode explicitly unimplemented with a clear runtime error
-      in `src/llm.ts`.
-- [x] Update CLI mode detection in `src/llm-query.ts` and `src/server.ts`
-      (`isCliExecution`) to include Claude mode.
-- [x] Expand tests for Claude model validation and executor selection/CLI
-      behavior in `src/schema.test.ts`, `src/llm.test.ts`, and
-      `src/server.test.ts`.
-- [x] Update user docs (`README.md`, `DETAILS.md`, `examples/SKILL.md`,
-      `examples/consult.md`) for "ask claude" and `CLAUDE_MODE`.
-- [x] Run full verification (`npm run test:run`) and fix regressions.
-- [ ] Phase 2 (later): API mode support with Anthropic SDK or equivalent API
-      path, plus `ANTHROPIC_API_KEY`.
+Goal: make agent/provider/model wiring extensible so adding `opencode` and
+`kilocode` later is mostly configuration, not cross-file edits.
+
+### Phase 0: Baseline and constraints
+
+- [ ] Inventory current coupling points in `src/llm.ts`, `src/llm-query.ts`,
+      and `src/server.ts` (model prefix checks, provider selection, CLI/API
+      mode branching).
+- [ ] Define non-goals for first refactor (do not change external MCP tool
+      contract or existing model defaults yet).
+- [ ] Add architecture note (`docs/architecture/subagents.md`) with current
+      flow and target flow.
+
+### Phase 1: Provider/agent registry extraction
+
+- [ ] Introduce a typed `ProviderRegistry` that resolves:
+      provider id -> capabilities, auth strategy, model normalization rules,
+      invoke adapter.
+- [ ] Replace scattered string-prefix logic with `resolveProvider(modelOrId)`.
+- [ ] Add `AgentRegistry` abstraction for subagents:
+      agent id -> prompt template policy, supported providers/models, execution
+      mode constraints.
+- [ ] Move all provider/agent metadata into one config module
+      (`src/registry/providers.ts`, `src/registry/agents.ts`).
+
+### Phase 2: Execution pipeline decoupling
+
+- [ ] Split orchestration into explicit stages:
+      request normalize -> agent resolve -> provider resolve -> context build ->
+      invoke -> response map.
+- [ ] Extract `handleGetAdvice` from `src/server.ts` into
+      `src/controllers/get-advice.ts`.
+- [ ] Introduce `ExecutionContext` object passed through stages instead of
+      global/shared branching.
+- [ ] Add timeout/fallback policy hook in pipeline (initially no-op default,
+      pluggable later).
+
+### Phase 3: Contract hardening
+
+- [ ] Define TypeScript interfaces for:
+      `ProviderAdapter`, `AgentAdapter`, `ModelResolver`, `ContextFilter`.
+- [ ] Add schema validation for registry entries (zod or equivalent) at startup.
+- [ ] Add error taxonomy with stable codes
+      (`PROVIDER_NOT_FOUND`, `MODEL_UNSUPPORTED`, `AUTH_MISSING`, etc.).
+- [ ] Keep existing CLI/API behavior but route both through the same pipeline.
+
+### Phase 4: Subagent onboarding path (`opencode`, `kilocode`)
+
+- [ ] Add stub entries for `opencode` and `kilocode` in `AgentRegistry`
+      behind feature flags.
+- [ ] Define per-agent system prompt and context policy boundaries.
+- [ ] Add compatibility matrix:
+      subagent x provider x model family x execution mode.
+- [ ] Add smoke tests for each agent through the same `get_advice` entrypoint.
+
+### Phase 5: Testing and rollout
+
+- [ ] Add unit tests for resolver and registry behavior (no string-prefix logic
+      outside resolver).
+- [ ] Add integration tests for equivalent behavior pre/post refactor for
+      Gemini/Codex/Claude.
+- [ ] Add snapshot/contract tests for MCP `get_advice` response shape.
+- [ ] Land in small PRs:
+      1) registry extraction, 2) pipeline extraction, 3) adapter migration,
+      4) agent onboarding stubs.
+
+### Definition of done
+
+- [ ] Adding a new subagent requires changes in registry/config only (no edits
+      to core server orchestration).
+- [ ] Adding a new model family requires resolver config change, not ad-hoc
+      string matching across files.
+- [ ] CLI and API modes produce equivalent provider-selection behavior.
+- [ ] `opencode` and `kilocode` can be introduced as config + adapter stubs with
+      passing smoke tests.
 
 ## Critical
 
