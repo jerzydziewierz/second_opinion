@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <gemini|gpt|claude|opencode> [prompt]"
+  echo "Usage: $0 <gemini|gpt|claude|kilo> [prompt]"
   exit 1
 fi
 
@@ -14,10 +14,10 @@ case "$alias_name" in
   gemini) model="gemini-3-pro-preview" ;;
   gpt) model="gpt-5.3-codex" ;;
   claude) model="claude-opus-4-6" ;;
-  opencode) model="opencode-default" ;;
+  kilo) model="kilocode-default" ;;
   *)
     echo "Unknown model alias: $alias_name"
-    echo "Allowed: gemini, gpt, claude, opencode"
+    echo "Allowed: gemini, gpt, claude, kilo"
     exit 2
     ;;
 esac

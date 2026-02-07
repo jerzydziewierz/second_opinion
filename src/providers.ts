@@ -1,12 +1,7 @@
 import { config } from './config.js'
 import { type SupportedChatModel as SupportedChatModelType } from './schema.js'
 
-export type ProviderId =
-  | 'openai'
-  | 'gemini'
-  | 'claude'
-  | 'opencode'
-  | 'kilocode'
+export type ProviderId = 'openai' | 'gemini' | 'claude' | 'kilocode'
 export type ExecutionMode = 'api' | 'cli'
 
 type ProviderConfig = {
@@ -30,11 +25,6 @@ const PROVIDERS: ProviderConfig[] = [
     id: 'claude',
     matchesModel: (model) => model.startsWith('claude-'),
     modeFromConfig: () => config.claudeMode,
-  },
-  {
-    id: 'opencode',
-    matchesModel: (model) => model.startsWith('opencode-'),
-    modeFromConfig: () => 'cli',
   },
   {
     id: 'kilocode',

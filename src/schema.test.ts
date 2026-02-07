@@ -8,7 +8,6 @@ describe('SupportedChatModel', () => {
     )
     expect(SupportedChatModel.safeParse('gpt-5.3-codex').success).toBe(true)
     expect(SupportedChatModel.safeParse('claude-opus-4-6').success).toBe(true)
-    expect(SupportedChatModel.safeParse('opencode-default').success).toBe(true)
     expect(SupportedChatModel.safeParse('kilocode-default').success).toBe(true)
     expect(SupportedChatModel.safeParse('gpt-3.5').success).toBe(false)
   })
@@ -17,9 +16,8 @@ describe('SupportedChatModel', () => {
     expect(ALL_MODELS).toContain('gemini-3-pro-preview')
     expect(ALL_MODELS).toContain('gpt-5.3-codex')
     expect(ALL_MODELS).toContain('claude-opus-4-6')
-    expect(ALL_MODELS).toContain('opencode-default')
     expect(ALL_MODELS).toContain('kilocode-default')
-    expect(ALL_MODELS).toHaveLength(5)
+    expect(ALL_MODELS).toHaveLength(4)
   })
 })
 

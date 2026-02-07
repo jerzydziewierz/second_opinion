@@ -31,7 +31,6 @@ describe('providers', () => {
     expect(resolveProvider('gpt-5.3-codex')).toBe('openai')
     expect(resolveProvider('gemini-3-pro-preview')).toBe('gemini')
     expect(resolveProvider('claude-opus-4-6')).toBe('claude')
-    expect(resolveProvider('opencode-default')).toBe('opencode')
     expect(resolveProvider('kilocode-default')).toBe('kilocode')
   })
 
@@ -43,7 +42,6 @@ describe('providers', () => {
     expect(resolveExecutionMode('gpt-5.3-codex')).toBe('cli')
     expect(resolveExecutionMode('gemini-3-pro-preview')).toBe('cli')
     expect(resolveExecutionMode('claude-opus-4-6')).toBe('api')
-    expect(resolveExecutionMode('opencode-default')).toBe('cli')
     expect(resolveExecutionMode('kilocode-default')).toBe('cli')
   })
 

@@ -213,13 +213,6 @@ const claudeCliConfig: CliConfig = {
     new Error(`Claude CLI exited with code ${code}. Error: ${stderr.trim()}`),
 }
 
-const opencodeCliConfig: CliConfig = {
-  cliName: 'opencode',
-  buildArgs: (_model, fullPrompt) => ['run', fullPrompt],
-  handleNonZeroExit: (code, stderr) =>
-    new Error(`Opencode CLI exited with code ${code}. Error: ${stderr.trim()}`),
-}
-
 const kilocodeCliConfig: CliConfig = {
   cliName: 'kilocode',
   buildArgs: (_model, fullPrompt) => ['run', '--print', fullPrompt],
@@ -287,8 +280,6 @@ const createExecutorProvider = () => {
           'Claude API mode is not implemented yet. Use CLAUDE_MODE=cli.',
         )
       }
-    } else if (provider === 'opencode') {
-      executor = createCliExecutor(opencodeCliConfig)
     } else if (provider === 'kilocode') {
       executor = createCliExecutor(kilocodeCliConfig)
     } else {

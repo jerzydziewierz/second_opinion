@@ -2,25 +2,24 @@
 
 ## Architectural Decoupling (Lean Plan)
 
-Goal: remove scattered provider/model logic and make new subagents (`opencode`,
-`kilocode`) a small, local change.
+Goal: remove scattered provider/model logic and make new subagents (`kilocode`)
+a small, local change.
 
 ### MVP (do now)
 
 - [x] Create `src/providers.ts` with a typed `ProviderConfig` and
       `resolveProvider(model)`.
-- [x] Move provider matching rules into that module (single source of truth;
-      no `startsWith(...)` checks outside resolver).
-- [x] Replace provider/model detection in:
-      `src/llm.ts`, `src/llm-query.ts`, `src/server.ts`.
+- [x] Move provider matching rules into that module (single source of truth; no
+      `startsWith(...)` checks outside resolver).
+- [x] Replace provider/model detection in: `src/llm.ts`, `src/llm-query.ts`,
+      `src/server.ts`.
 - [x] Extract `handleGetAdvice` from `src/server.ts` into
       `src/controllers/get-advice.ts`.
-- [x] Add a context security gate before prompt/context build
-      (sensitive-file denylist, binary skip, size cap).
+- [x] Add a context security gate before prompt/context build (sensitive-file
+      denylist, binary skip, size cap).
 
 ### Subagent onboarding path
 
-- [x] Add `opencode` as a provider config + invoke function.
 - [x] Add `kilocode` as a provider config + invoke function.
 - [x] Add smoke tests for `get_advice` path for each provider.
 

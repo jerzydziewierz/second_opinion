@@ -92,7 +92,6 @@ describe('isCliExecution', () => {
     mockConfig.claudeMode = 'api'
     expect(isCliExecution('claude-opus-4-6')).toBe(false)
 
-    expect(isCliExecution('opencode-default')).toBe(true)
     expect(isCliExecution('kilocode-default')).toBe(true)
   })
 })
@@ -176,30 +175,15 @@ describe('handleGetAdvice', () => {
     await expect(handleGetAdvice({ prompt: 'oops' })).rejects.toThrow('boom')
   })
 
-  it('smoke: routes opencode model through get_advice', async () => {
-    await handleGetAdvice({
-      prompt: 'hello',
-      model: 'opencode-default',
-      files: ['./foo.ts'],
-    })
-    expect(queryLlmMock).toHaveBeenCalledWith(
-      'hello',
-      'opencode-default',
-      [resolve('./foo.ts')],
-    )
-  })
-
   it('smoke: routes kilocode model through get_advice', async () => {
     await handleGetAdvice({
       prompt: 'hello',
       model: 'kilocode-default',
       files: ['./foo.ts'],
     })
-    expect(queryLlmMock).toHaveBeenCalledWith(
-      'hello',
-      'kilocode-default',
-      [resolve('./foo.ts')],
-    )
+    expect(queryLlmMock).toHaveBeenCalledWith('hello', 'kilocode-default', [
+      resolve('./foo.ts'),
+    ])
   })
 })
 
