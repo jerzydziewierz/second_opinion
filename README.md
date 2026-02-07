@@ -25,7 +25,7 @@ note that as of 2026-02, subscription is approx. 20x cheaper than API;
 
 once configured, test by :
 
-"testing: use get-opinion tool and ask all models -  what is the capital of Paris?"
+"testing: use the `get_advice` tool and ask all models - what is the capital of Paris?"
 
 ## Example
 
