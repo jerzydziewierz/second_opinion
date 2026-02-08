@@ -54,6 +54,16 @@ pub struct ConsultArgs {
     pub git_diff: Option<GitDiffParams>,
 }
 
+fn format_system_time(t: std::time::SystemTime) -> String {
+    let d = t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
+    let secs = d.as_secs();
+    let millis = d.subsec_millis();
+    let h = (secs / 3600) % 24;
+    let m = (secs / 60) % 60;
+    let s = secs % 60;
+    format!("{h:02}:{m:02}:{s:02}.{millis:03}Z")
+}
+
 #[derive(Clone)]
 pub struct SecondOpinionServer {
     config: Config,
@@ -152,14 +162,29 @@ impl SecondOpinionServer {
 
         log_prompt(&alias.to_string(), &full_prompt);
 
-        // Execute CLI
-        match execute_cli(alias, &model_name, &full_prompt, &self.config).await {
+        // Execute CLI with wall-clock timing
+        let t_start = std::time::Instant::now();
+        let wall_start = std::time::SystemTime::now();
+        let result = execute_cli(alias, &model_name, &full_prompt, &self.config).await;
+        let duration = t_start.elapsed();
+        let wall_end = std::time::SystemTime::now();
+        let timing = format!(
+            "[start={} end={} duration={:.1}s model={}]",
+            format_system_time(wall_start),
+            format_system_time(wall_end),
+            duration.as_secs_f64(),
+            alias,
+        );
+
+        match result {
             Ok(response) => {
                 log_response(&alias.to_string(), &response);
-                Ok(CallToolResult::success(vec![Content::text(response)]))
+                Ok(CallToolResult::success(vec![Content::text(format!(
+                    "{timing}\n{response}"
+                ))]))
             }
             Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-                "LLM query failed: {e}"
+                "{timing}\nLLM query failed: {e}"
             ))])),
         }
     }

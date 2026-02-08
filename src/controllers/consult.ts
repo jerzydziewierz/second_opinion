@@ -47,10 +47,16 @@ export async function handleConsult(args: unknown) {
 
   await logPrompt(alias, prompt)
 
+  const tStart = new Date()
   const { response, costInfo } = await queryLlm(prompt, alias, filePaths)
+  const tEnd = new Date()
+  const duration = ((tEnd.getTime() - tStart.getTime()) / 1000).toFixed(1)
+  const fmt = (d: Date) => d.toISOString().slice(11, 23) + 'Z'
+  const timing = `[start=${fmt(tStart)} end=${fmt(tEnd)} duration=${duration}s model=${alias}]`
+
   await logResponse(alias, response, costInfo)
 
   return {
-    content: [{ type: 'text', text: response }],
+    content: [{ type: 'text', text: `${timing}\n${response}` }],
   }
 }

@@ -12,6 +12,7 @@ pub enum ModelAlias {
     Kilo,
 }
 
+#[cfg(test)]
 impl ModelAlias {
     pub const ALL: &[ModelAlias] = &[
         ModelAlias::Gemini,
