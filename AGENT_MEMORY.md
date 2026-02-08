@@ -44,6 +44,16 @@ lets an AI coding assistant query other LLMs for a "second opinion".
 - `src/providers.ts` — alias-to-provider mapping (used for env sanitization)
 - `src/logger.ts` — logging to state dir
 
+### Migration decision — PENDING
+
+Grey is considering moving off Node.js for startup speed + memory. Two options explored:
+
+1. **Bun migration** — TODO.md has a complete plan reviewed by 3 models (self, Gemini, Codex). ~1 day of work. Saves build step, ~200ms startup. Still 30-60MB RSS.
+2. **Rust rewrite** — Official `rmcp` crate (v0.8.0) exists at `modelcontextprotocol/rust-sdk`. Tokio-based, stdio transport supported. Core logic is ~200-300 lines: "concatenate strings, spawn CLI, return stdout." Would give ~1ms startup, ~2-5MB RSS. ~1-2 weeks.
+
+Grey's current stance: "economic argument for do nothing is strong." No decision made — but notes that in the age of LLM agents, the cost calculus shifts. A Rust rewrite isn't 1-2 weeks of human effort; it's more like 3x 20-min sessions of prompt writing + review, with overnight agent work in between.
+Key insight from discussion: the real bottleneck is the spawned CLIs (seconds to minutes), not the server runtime. The server is mostly idle.
+
 ### All AGENTS.md tasks completed
 
 (a)-(g) all done. README.md and DETAILS.md updated to match.
