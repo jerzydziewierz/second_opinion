@@ -41,13 +41,13 @@ Parameters (JSON Schema):
 
 The binary should support these subcommands/flags:
 
-- `grey-so` (no args) — start MCP server on stdio
-- `grey-so --version` / `-v` — print version
-- `grey-so init-prompt` — create default system prompt file at `~/.config/grey-so/SYSTEM_PROMPT.md`
+- `grey-rso` (no args) — start MCP server on stdio
+- `grey-rso --version` / `-v` — print version
+- `grey-rso init-prompt` — create default system prompt file at `~/.config/grey-rso/SYSTEM_PROMPT.md`
 
 ### Config file
 
-Location: `~/.config/grey-so/config.json`
+Location: `~/.config/grey-rso/config.json`
 
 ```json
 {
@@ -59,7 +59,7 @@ Location: `~/.config/grey-so/config.json`
   },
   "defaultAlias": "gemini",
   "codexReasoningEffort": "medium",
-  "systemPromptPath": "~/.config/grey-so/SYSTEM_PROMPT.md"
+  "systemPromptPath": "~/.config/grey-rso/SYSTEM_PROMPT.md"
 }
 ```
 
@@ -77,14 +77,14 @@ rust/
   src/
     main.rs          -- CLI arg parsing, stdio transport setup
     server.rs        -- MCP ServerHandler impl, tool dispatch
-    config.rs        -- Load/create ~/.config/grey-so/config.json
+    config.rs        -- Load/create ~/.config/grey-rso/config.json
     models.rs        -- Alias enum, default model mappings
     cli_exec.rs      -- Spawn CLI subprocesses (gemini, codex, claude, kilo)
     prompt.rs        -- Assemble full prompt (system + user + files + diff)
     git_diff.rs      -- Run `git diff` via Command
     file_check.rs    -- Validate context files (size, binary, sensitive paths)
     system_prompt.rs -- Load/create system prompt
-    logger.rs        -- Append-only log to ~/.local/state/grey-so/mcp.log
+    logger.rs        -- Append-only log to ~/.local/state/grey-rso/mcp.log
 ```
 
 ### Key design decisions
@@ -103,14 +103,14 @@ rust/
 
 ```toml
 [package]
-name = "grey-so"
+name = "grey-rso"
 version = "0.1.0"
 edition = "2024"
 description = "Second Opinion MCP server — consult a different AI coding assistant"
 license = "MIT"
 
 [[bin]]
-name = "grey-so"
+name = "grey-rso"
 path = "src/main.rs"
 
 [dependencies]
@@ -211,12 +211,12 @@ IMPORTANT: Do not edit files yourself, only provide recommendations and code exa
 
 ## Logging
 
-Append-only log at `$XDG_STATE_HOME/grey-so/mcp.log` (default: `~/.local/state/grey-so/mcp.log`).
+Append-only log at `$XDG_STATE_HOME/grey-rso/mcp.log` (default: `~/.local/state/grey-rso/mcp.log`).
 
 Log entries are plain text with ISO 8601 timestamps. No structured JSON, no rotation.
 
 ```
-[2026-02-08T12:00:00Z] MCP SERVER STARTED - grey-so v0.1.0
+[2026-02-08T12:00:00Z] MCP SERVER STARTED - grey-rso v0.1.0
 ================================================================================
 [2026-02-08T12:00:01Z] TOOL CALL: consult
 Arguments: { ... }
@@ -236,7 +236,7 @@ Arguments: { ... }
 Suggested order of implementation (each step should compile and, where applicable, pass tests):
 
 1. **Scaffold** — `cargo init`, Cargo.toml with all deps, `main.rs` that just prints version.
-2. **Config** — `config.rs` + `models.rs`. Load or create `~/.config/grey-so/config.json`.
+2. **Config** — `config.rs` + `models.rs`. Load or create `~/.config/grey-rso/config.json`.
 3. **System prompt** — `system_prompt.rs`. Load or create the prompt file.
 4. **File validation** — `file_check.rs`. Pure functions, easy to unit test.
 5. **Git diff** — `git_diff.rs`. Spawn `git diff`, return `Result<String, Error>`.

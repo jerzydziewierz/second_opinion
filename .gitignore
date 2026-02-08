@@ -3,5 +3,6 @@
 .claude
 node_modules
 dist
+rust/target
 tsconfig.tsbuildinfo
 test
