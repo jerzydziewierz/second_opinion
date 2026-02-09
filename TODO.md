@@ -1,6 +1,23 @@
 # TODO
 
-## Migrate from Node.js to Bun (full cut-over, no npm compat)
+## Current priorities
+
+- [ ] `process.cwd()` default for repo path may be unreliable when MCP server runs from
+      a different directory. Consider requiring absolute path from agent.
+- [ ] Naming inconsistency — project titled "Second Opinion MCP" but install
+      paths and config use `grey-so`. Potential config drift and operator
+      confusion.
+- [ ] No fallback/timeout policy when selected model is unavailable. In particular, Claude Code often takes longer than 60 seconds to return results. (`src/llm.ts:69-134` has no timeout on spawn — hangs indefinitely on provider outage. Highest-priority non-migration item.)
+
+## Completed
+
+- [x] Rename tool from `get_advice` to `consult` (schema.ts + server.ts dispatch)
+
+---
+
+## Future: Migrate from Node.js to Bun (if/when we decide to do this)
+
+**Note**: This migration is NOT planned for now. These are tasks that would be needed **in case of** a future migration to Bun. Kept here for reference.
 
 ### Package manager & deps
 - [ ] Delete `package-lock.json`, `node_modules/`
@@ -61,17 +78,3 @@
 - ESM — already `"type": "module"`
 - `.js` import extensions — Bun resolves these to `.ts` automatically
 
----
-
-## Next
-
-- [x] Rename tool from `get_advice` to `consult` (schema.ts + server.ts dispatch)
-
-## Medium
-
-- [ ] `process.cwd()` default for repo path may be unreliable when MCP server runs from
-      a different directory. Consider requiring absolute path from agent.
-- [ ] Naming inconsistency — project titled "Second Opinion MCP" but install
-      paths and config use `grey-so`. Potential config drift and operator
-      confusion.
-- [ ] No fallback/timeout policy when selected model is unavailable. In particular, Claude Code often takes longer than 60 seconds to return results. (`src/llm.ts:69-134` has no timeout on spawn — hangs indefinitely on provider outage. Highest-priority non-migration item.)
