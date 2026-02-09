@@ -59,5 +59,5 @@ This keeps the MCP interface minimal and spends as little of your precious token
 
 ## Further reading
 
-See [DETAILS.md](DETAILS.md) for slash command examples, skill setup, and
+See [DETAILS.md](doc/DETAILS.md) for slash command examples, skill setup, and
 development instructions.
